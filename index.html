@@ -1,0 +1,49 @@
+
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <title>Kingdom of Chaos</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <style>
+    body {
+      background: url('https://images.unsplash.com/photo-1549989470-b5e3078f3f5d') no-repeat center center fixed;
+      background-size: cover;
+      margin: 0;
+      padding: 0;
+      text-align: center;
+      font-family: Arial, sans-serif;
+      color: white;
+    }
+    .content {
+      margin-top: 50px;
+    }
+    button {
+      margin-top: 20px;
+      padding: 15px 30px;
+      font-size: 18px;
+      background: #4CAF50;
+      border: none;
+      border-radius: 8px;
+      color: white;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div class="content">
+    <h1>Vương Quốc Chaos</h1>
+    <p>Dân số: 50 người</p>
+    <p>Vàng: 500</p>
+    <button onclick="sendData()">Nâng cấp lâu đài</button>
+  </div>
+
+  <script>
+    function sendData() {
+      Telegram.WebApp.sendData("nang_cap_lau_dai");
+    }
+    Telegram.WebApp.ready();
+  </script>
+</body>
+</html>
