@@ -1,5 +1,4 @@
-// Setup PlayFab
-PlayFab.settings.titleId = "188E8A"; // Thay bằng TitleId thật của sếp
+PlayFab.settings.titleId = "188E8A";
 
 let loadingProgress = 0;
 let progressInterval;
@@ -11,7 +10,7 @@ function startLoadingProgress() {
             loadingProgress++;
             updateProgressBar();
         }
-    }, 50); // 50ms tăng 1% => khá mượt
+    }, 50);
 }
 
 function updateProgressBar() {
@@ -20,7 +19,7 @@ function updateProgressBar() {
 }
 
 function finishLoading(success) {
-    clearInterval(progressInterval); // Stop auto tăng
+    clearInterval(progressInterval);
     if (success) {
         loadingProgress = 100;
         updateProgressBar();
@@ -40,40 +39,11 @@ function login() {
         CreateAccount: true
     }, function(result) {
         console.log("Đăng nhập thành công:", result);
-
-        if (result.data.NewlyCreated) {
-            console.log("Tài khoản mới -> Grant 0 vào các tài nguyên.");
-            grantZeroCurrency(["FD", "WD", "IR", "ST"], function() {
-                loadResources();
-            });
-        } else {
-            loadResources();
-        }
-
+        loadResources();
     }, function(error) {
         console.error("Đăng nhập lỗi:", error);
-        alert("Lỗi đăng nhập PlayFab!");
+        alert("Đăng nhập thất bại!");
         finishLoading(false);
-    });
-}
-
-function grantZeroCurrency(currencies, callback) {
-    let count = 0;
-    currencies.forEach(code => {
-        PlayFabClientSDK.AddUserVirtualCurrency({
-            VirtualCurrency: code,
-            Amount: 0
-        }, function(result) {
-            console.log(`Grant 0 vào ${code} thành công.`);
-            count++;
-            if (count === currencies.length) {
-                callback();
-            }
-        }, function(error) {
-            console.error(`Lỗi grant 0 ${code}:`, error);
-            alert(`Lỗi grant ${code}`);
-            finishLoading(false);
-        });
     });
 }
 
@@ -84,36 +54,9 @@ function loadResources() {
             finishLoading(false);
             return;
         }
-
-        const vc = result.data.VirtualCurrency;
-        if (!vc) {
-            alert("Không có dữ liệu tài nguyên!");
-            finishLoading(false);
-            return;
-        }
-
-        const missing = [];
-        if (vc.FD === undefined) missing.push("FD");
-        if (vc.WD === undefined) missing.push("WD");
-        if (vc.IR === undefined) missing.push("IR");
-        if (vc.ST === undefined) missing.push("ST");
-
-        if (missing.length > 0) {
-            alert("Thiếu tài nguyên: " + missing.join(", "));
-            finishLoading(false);
-            return;
-        }
-
-        document.getElementById('fd').innerText = vc.FD;
-        document.getElementById('wd').innerText = vc.WD;
-        document.getElementById('ir').innerText = vc.IR;
-        document.getElementById('st').innerText = vc.ST;
-
-        finishLoading(true); // Thành công!
-
+        finishLoading(true);
     }, function(error) {
-        console.error("Lỗi khi lấy tài nguyên:", error);
-        alert("Kết nối server thất bại!");
+        console.error("Lỗi khi load:", error);
         finishLoading(false);
     });
 }
