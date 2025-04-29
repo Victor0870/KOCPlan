@@ -1,4 +1,4 @@
-<!-- index.html (file gộp đầy đủ, dùng CloudScript để tạo static) -->
+<!-- index.html (file gộp đầy đủ, có nút Thu Hoạch, cập nhật tài nguyên trực tiếp) -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -43,6 +43,16 @@
       font-size: 16px;
       font-weight: bold;
     }
+    #harvestBtn {
+      margin-top: 20px;
+      padding: 10px 20px;
+      font-size: 16px;
+      background: #28a745;
+      color: #fff;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
   </style>
   <script src="https://download.playfab.com/PlayFabClientApi.js"></script>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
@@ -60,6 +70,7 @@
   </div>
   <h1>Welcome to Kingdom of Chaos!</h1>
   <p>Grow your empire and conquer the world!</p>
+  <button id="harvestBtn">Thu Hoạch</button>
 </div>
 
 <script>
@@ -82,7 +93,8 @@ function callCreateStatic(callback) {
 function loadPlayerStatic(callback) {
   PlayFabClientSDK.GetUserData({}, function (result) {
     const data = result.data?.Data || {};
-    const hasStatic = ["FieldProductivity", "WoodProductivity", "IronProductivity", "StoneProductivity"]
+    const hasStatic = ["FieldProductivity", "WoodProductivity", "IronProductivity", "StoneProductivity",
+                       "Food", "Wood", "Iron", "Stone"]
       .every(k => k in data);
     if (!hasStatic) {
       console.log("Chưa có static, gọi CloudScript...");
@@ -133,9 +145,26 @@ function loadInventory() {
   });
 }
 
+function harvestResources() {
+  PlayFabClientSDK.ExecuteCloudScript({
+    FunctionName: "harvestResource"
+  }, function(result) {
+    const storage = result.data.FunctionResult?.storage || {};
+    document.getElementById('fd').innerText = storage.Food || 0;
+    document.getElementById('wd').innerText = storage.Wood || 0;
+    document.getElementById('ir').innerText = storage.Iron || 0;
+    document.getElementById('st').innerText = storage.Stone || 0;
+  }, function(error) {
+    console.error("Lỗi khi gọi harvestResource:", error);
+    alert("Lỗi khi thu hoạch tài nguyên!");
+  });
+}
+
 setTimeout(() => {
   loginAndLoad(loadInventory);
 }, 300);
+
+document.getElementById("harvestBtn").addEventListener("click", harvestResources);
 </script>
 
 </body>
