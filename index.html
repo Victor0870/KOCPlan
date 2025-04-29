@@ -12,6 +12,12 @@
             text-align: center;
             padding-top: 50px;
         }
+        .screen {
+            display: none;
+        }
+        #loading_screen {
+            display: block;
+        }
         .content {
             background: white;
             padding: 20px;
@@ -19,6 +25,16 @@
             width: 300px;
             border-radius: 10px;
             box-shadow: 0px 0px 10px #aaa;
+        }
+        button {
+            padding: 10px 20px;
+            margin-top: 20px;
+            border: none;
+            border-radius: 8px;
+            background-color: #28a745;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
         }
         .gold {
             color: goldenrod;
@@ -28,14 +44,23 @@
 </head>
 <body>
 
-<div class="content">
-    <h1>Kingdom of Chaos</h1>
-    <p>Dân số: 50 người</p>
-    <p>Vàng: <span id="gold_amount">Loading...</span></p>
+<!-- Màn Loading -->
+<div id="loading_screen">
+    <h2>Đang tải dữ liệu...</h2>
+</div>
+
+<!-- Màn HomePage -->
+<div id="home_screen" class="screen">
+    <div class="content">
+        <h1>Kingdom of Chaos</h1>
+        <p>Dân số: 50 người</p>
+        <p>Vàng: <span id="gold_amount">Loading...</span></p>
+        <button onclick="collectGold()">Thu hoạch vàng</button>
+    </div>
 </div>
 
 <script>
-PlayFab.settings.titleId = "188E8A"; // <--- Sửa đúng TitleId của game sếp
+PlayFab.settings.titleId = "188E8A"; // <-- Sửa đúng TitleId sếp nhé
 
 window.onload = function() {
     Telegram.WebApp.ready();
@@ -67,9 +92,27 @@ function loadGold() {
             gold = result.data.VirtualCurrency.GD;
         }
         document.getElementById("gold_amount").innerText = gold;
+
+        // Khi load xong vàng → ẩn loading, hiện home
+        document.getElementById("loading_screen").style.display = "none";
+        document.getElementById("home_screen").style.display = "block";
     }, function(error) {
         console.error("Lỗi khi lấy số vàng!", error);
         document.getElementById("gold_amount").innerText = "Error";
+    });
+}
+
+// Hàm thu hoạch vàng
+function collectGold() {
+    PlayFabClientSDK.AddUserVirtualCurrency({
+        VirtualCurrency: "GD",
+        Amount: 50
+    }, function(result) {
+        console.log("Thu hoạch vàng thành công!", result);
+        loadGold();
+    }, function(error) {
+        console.error("Thu hoạch vàng thất bại!", error);
+        alert("Thu hoạch thất bại!");
     });
 }
 </script>
