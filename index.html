@@ -1,121 +1,95 @@
-<!DOCTYPE html>
-<html lang="en">
+<!DOCTYPE html><html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Kingdom of Chaos</title>
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://download.playfab.com/PlayFabClientApi.js"></script>
     <style>
         body {
-            background: #f0f0f0;
+            background-color: #f0f0f0;
             font-family: Arial, sans-serif;
-            text-align: center;
-            padding-top: 50px;
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
         }
-        .screen {
+        #loading {
+            width: 100%;
+            height: 100vh;
+            background: #000;
+            color: #fff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 24px;
+        }
+        #homepage {
             display: none;
-        }
-        #loading_screen {
-            display: block;
-        }
-        .content {
-            background: white;
             padding: 20px;
-            margin: auto;
-            width: 300px;
-            border-radius: 10px;
-            box-shadow: 0px 0px 10px #aaa;
+            text-align: center;
         }
-        button {
-            padding: 10px 20px;
-            margin-top: 20px;
-            border: none;
-            border-radius: 8px;
-            background-color: #28a745;
-            color: white;
+        .resource-bar {
+            background: #fff;
+            padding: 10px;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+        .resource-item {
             font-size: 16px;
-            cursor: pointer;
-        }
-        .gold {
-            color: goldenrod;
             font-weight: bold;
         }
     </style>
 </head>
-<body>
+<body><div id="loading">Loading game...</div><div id="homepage">
+    <div class="resource-bar">
+        <div class="resource-item">Field: <span id="fd">0</span></div>
+        <div class="resource-item">Wood: <span id="wd">0</span></div>
+        <div class="resource-item">Iron: <span id="ir">0</span></div>
+        <div class="resource-item">Stone: <span id="st">0</span></div>
+    </div><h1>Welcome to Kingdom of Chaos!</h1>
+<p>Grow your empire and conquer the world!</p>
 
-<!-- Màn Loading -->
-<div id="loading_screen">
-    <h2>Đang tải dữ liệu...</h2>
-</div>
+<!-- Nút lâu đài sẽ thêm sau -->
 
-<!-- Màn HomePage -->
-<div id="home_screen" class="screen">
-    <div class="content">
-        <h1>Kingdom of Chaos</h1>
-        <p>Dân số: 50 người</p>
-        <p>Vàng: <span id="gold_amount">Loading...</span></p>
-        <button onclick="collectGold()">Thu hoạch vàng</button>
-    </div>
-</div>
+</div><script>
+// Thiet lap PlayFab
+PlayFab.settings.titleId = "188E8A"; // TitleId that you provided
 
-<script>
-PlayFab.settings.titleId = "188E8A"; // <-- Sửa đúng TitleId sếp nhé
+function loadResources() {
+    PlayFabClientSDK.GetUserInventory({}, function(result) {
+        const vc = result.data.VirtualCurrency;
+        document.getElementById('fd').innerText = vc.FD || 0;
+        document.getElementById('wd').innerText = vc.WD || 0;
+        document.getElementById('ir').innerText = vc.IR || 0;
+        document.getElementById('st').innerText = vc.ST || 0;
 
-window.onload = function() {
-    Telegram.WebApp.ready();
+        // An loading, hien homepage
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('homepage').style.display = 'block';
+    }, function(error) {
+        console.error("Lỗi load tài nguyên:", error);
+    });
+}
 
-    let telegramUser = Telegram.WebApp.initDataUnsafe.user;
-
-    if (!telegramUser || !telegramUser.id) {
-        alert("Không lấy được Telegram ID. Vui lòng kiểm tra lại!");
-        return;
-    }
-
+function login() {
     PlayFabClientSDK.LoginWithCustomID({
         TitleId: PlayFab.settings.titleId,
-        CustomId: telegramUser.id.toString(),
+        CustomId: Telegram.WebApp.initDataUnsafe.user.id.toString(),
         CreateAccount: true
     }, function(result) {
-        console.log("Đăng nhập thành công!", result);
-        loadGold();
+        console.log("Đăng nhập thành công:", result);
+        loadResources();
     }, function(error) {
-        console.error("Đăng nhập PlayFab thất bại!", error);
-        alert("Lỗi đăng nhập PlayFab!");
-    });
-};
-
-function loadGold() {
-    PlayFabClientSDK.GetUserInventory({}, function(result) {
-        let gold = 0;
-        if (result.data.VirtualCurrency && result.data.VirtualCurrency.GD !== undefined) {
-            gold = result.data.VirtualCurrency.GD;
-        }
-        document.getElementById("gold_amount").innerText = gold;
-
-        // Khi load xong vàng → ẩn loading, hiện home
-        document.getElementById("loading_screen").style.display = "none";
-        document.getElementById("home_screen").style.display = "block";
-    }, function(error) {
-        console.error("Lỗi khi lấy số vàng!", error);
-        document.getElementById("gold_amount").innerText = "Error";
+        console.error("Đăng nhập lỗi:", error);
     });
 }
 
-// Hàm thu hoạch vàng
-function collectGold() {
-    PlayFabClientSDK.AddUserVirtualCurrency({
-        VirtualCurrency: "GD",
-        Amount: 50
-    }, function(result) {
-        console.log("Thu hoạch vàng thành công!", result);
-        loadGold();
-    }, function(error) {
-        console.error("Thu hoạch vàng thất bại!", error);
-        alert("Thu hoạch thất bại!");
-    });
-}
-</script>
-
-</body>
+// Bắt đầu login
+Telegram.WebApp.ready();
+login();
+</script></body>
 </html>
