@@ -89,3 +89,30 @@ function loadResources() {
 
 Telegram.WebApp.ready();
 login();
+let loadingProgress = 0;
+let progressInterval = setInterval(() => {
+    if (loadingProgress < 95) {
+        loadingProgress++;
+        updateProgressBar();
+    }
+}, 50); // tốc độ 50ms tăng 1%
+
+function updateProgressBar() {
+    document.getElementById('progress-bar').style.width = loadingProgress + "%";
+    document.getElementById('loading-text').innerText = "Loading game... " + loadingProgress + "%";
+}
+function finishLoading() {
+    loadingProgress = 100;
+    updateProgressBar();
+    setTimeout(() => {
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('homepage').style.display = 'block';
+    }, 300); // Chờ tí cho mượt
+}
+function finishLoading() {
+    loadingProgress = 100;
+    updateProgressBar();
+    setTimeout(() => {
+        finishLoading();
+    }, 300); // Chờ tí cho mượt
+}
