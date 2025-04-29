@@ -1,49 +1,22 @@
 // Setup PlayFab
-PlayFab.settings.titleId = "188E8A";
-
-let loadingProgress = 0;
-let progressInterval;
-let loginTimeout;
-let isLoginDone = false;
-let isResourceDone = false;
-
-function startLoadingProgress() {
-    loadingProgress = 0;
-    progressInterval = setInterval(() => {
-        if (loadingProgress < 90) {
-            loadingProgress++;
-            document.getElementById('loading').innerText = "Loading game... " + loadingProgress + "%";
-        } else if (isLoginDone && isResourceDone) {
-            clearInterval(progressInterval);
-            loadingProgress = 100;
-            document.getElementById('loading').innerText = "Loading game... 100%";
-            setTimeout(() => {
-                document.getElementById('loading').style.display = 'none';
-                document.getElementById('homepage').style.display = 'block';
-            }, 300);
-        }
-    }, 50);
-}
+PlayFab.settings.titleId = "188E8A"; // TitleId của sếp
 
 function login() {
     PlayFabClientSDK.LoginWithCustomID({
         TitleId: PlayFab.settings.titleId,
         CustomId: Telegram.WebApp.initDataUnsafe.user?.id?.toString(),
         CreateAccount: true
-    }, function(result) {
+    }, function (result) {
         console.log("Đăng nhập thành công:", result);
-        clearTimeout(loginTimeout);
-        isLoginDone = true;
         loadResources();
-    }, function(error) {
+    }, function (error) {
         console.error("Đăng nhập lỗi:", error);
-        clearTimeout(loginTimeout);
         alert("Đăng nhập thất bại! Vui lòng thử lại.");
     });
 }
 
 function loadResources() {
-    PlayFabClientSDK.GetUserInventory({}, function(result) {
+    PlayFabClientSDK.GetUserInventory({}, function (result) {
         if (!result || !result.data) {
             alert("Không lấy được dữ liệu tài nguyên!");
             return;
@@ -72,8 +45,11 @@ function loadResources() {
         document.getElementById('ir').innerText = vc.IR;
         document.getElementById('st').innerText = vc.ST;
 
-        isResourceDone = true;
-    }, function(error) {
+        // Sau khi load xong -> vào game
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('homepage').style.display = 'block';
+
+    }, function (error) {
         console.error("Lỗi khi lấy tài nguyên:", error);
         alert("Kết nối server thất bại!");
     });
@@ -81,12 +57,7 @@ function loadResources() {
 
 Telegram.WebApp.ready();
 
+// Đợi Telegram ready rồi login luôn
 setTimeout(() => {
-    startLoadingProgress();
     login();
-
-    loginTimeout = setTimeout(() => {
-        clearInterval(progressInterval);
-        alert("Không kết nối được server. Vui lòng kiểm tra mạng!");
-    }, 10000);
 }, 100);
