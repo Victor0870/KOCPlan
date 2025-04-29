@@ -1,23 +1,181 @@
-<!-- index.html --><!DOCTYPE html><html lang="en">
+<!DOCTYPE html>
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Kingdom of Chaos</title>
-    <link rel="stylesheet" href="style.css">
+
+    <!-- CSS gộp -->
+    <style>
+        body {
+            background: #f0f0f0;
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
+        }
+
+        #loading {
+            width: 100%;
+            height: 100vh;
+            background: #000;
+            color: #fff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 24px;
+        }
+
+        #homepage {
+            display: none;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .resource-bar {
+            background: #fff;
+            padding: 10px;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .resource-item {
+            font-size: 16px;
+            font-weight: bold;
+        }
+    </style>
+
+    <!-- SDK -->
     <script src="https://download.playfab.com/PlayFabClientApi.js"></script>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <script src="playerManager.js" defer></script>
-    <script src="main.js" defer></script>
 </head>
-<body><div id="loading">Loading game...</div><div id="homepage" style="display: none;">
+<body>
+
+<!-- Loading -->
+<div id="loading">Loading game...</div>
+
+<!-- Homepage -->
+<div id="homepage">
     <div class="resource-bar">
         <div class="resource-item">Field: <span id="fd">0</span></div>
         <div class="resource-item">Wood: <span id="wd">0</span></div>
         <div class="resource-item">Iron: <span id="ir">0</span></div>
         <div class="resource-item">Stone: <span id="st">0</span></div>
-    </div><h1>Welcome to Kingdom of Chaos!</h1>
-<p>Grow your empire and conquer the world!</p>
+    </div>
 
-</div></body>
+    <h1>Welcome to Kingdom of Chaos!</h1>
+    <p>Grow your empire and conquer the world!</p>
+</div>
+
+<!-- JS gộp -->
+<script>
+// === playerManager.js nội bộ ===
+const defaultStaticData = {
+    FieldProductivity: 1,
+    WoodProductivity: 1,
+    IronProductivity: 1,
+    StoneProductivity: 1
+};
+
+function playerLogin(callback) {
+    PlayFab.settings.titleId = "188E8A";
+
+    PlayFabClientSDK.LoginWithCustomID({
+        TitleId: PlayFab.settings.titleId,
+        CustomId: Telegram.WebApp.initDataUnsafe.user.id.toString(),
+        CreateAccount: true
+    }, function (result) {
+        console.log("Đăng nhập thành công:", result);
+        if (result.data.NewlyCreated) {
+            console.log("Tạo static mặc định cho tài khoản mới.");
+            createPlayerStatic(callback);
+        } else {
+            console.log("Tài khoản đã có, load static.");
+            loadPlayerStatic(callback);
+        }
+    }, function (error) {
+        console.error("Lỗi đăng nhập:", error);
+        alert("Đăng nhập thất bại!");
+        document.getElementById('loading').innerText = 'Lỗi đăng nhập!';
+    });
+}
+
+function createPlayerStatic(callback) {
+    PlayFabClientSDK.UpdateUserData({
+        Data: defaultStaticData
+    }, function (result) {
+        console.log("Tạo dữ liệu mặc định thành công.");
+        if (callback) callback(defaultStaticData);
+    }, function (error) {
+        console.error("Lỗi khi tạo dữ liệu mặc định:", error);
+        alert("Không thể tạo dữ liệu player!");
+        document.getElementById('loading').innerText = 'Lỗi tạo static!';
+    });
+}
+
+function loadPlayerStatic(callback) {
+    PlayFabClientSDK.GetUserData({}, function (result) {
+        if (result.data && result.data.Data) {
+            const staticData = {};
+            for (const key in defaultStaticData) {
+                staticData[key] = parseInt(result.data.Data[key]?.Value || 0);
+            }
+            console.log("Static data đã load:", staticData);
+            if (callback) callback(staticData);
+        } else {
+            alert("Không load được dữ liệu player!");
+            document.getElementById('loading').innerText = 'Không load được static!';
+        }
+    }, function (error) {
+        console.error("Lỗi khi load dữ liệu player:", error);
+        alert("Không thể tải dữ liệu player!");
+        document.getElementById('loading').innerText = 'Lỗi tải static!';
+    });
+}
+
+// === main.js nội bộ ===
+Telegram.WebApp.ready();
+
+setTimeout(() => {
+    if (!Telegram.WebApp.initDataUnsafe.user || !Telegram.WebApp.initDataUnsafe.user.id) {
+        document.getElementById('loading').innerText = "Không lấy được ID người chơi!";
+        alert("Không thể lấy ID từ Telegram. Hãy thử lại!");
+        return;
+    }
+
+    playerLogin(function(staticData) {
+        console.log("Static Data đã sẵn sàng:", staticData);
+
+        PlayFabClientSDK.GetUserInventory({}, function(result) {
+            if (!result || !result.data) {
+                alert("Không lấy được dữ liệu tài nguyên!");
+                document.getElementById('loading').innerText = 'Lỗi tải tài nguyên!';
+                return;
+            }
+
+            const vc = result.data.VirtualCurrency || {};
+
+            document.getElementById('fd').innerText = vc.FD || 0;
+            document.getElementById('wd').innerText = vc.WD || 0;
+            document.getElementById('ir').innerText = vc.IR || 0;
+            document.getElementById('st').innerText = vc.ST || 0;
+
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('homepage').style.display = 'block';
+        }, function(error) {
+            console.error("Lỗi khi load tài nguyên:", error);
+            alert("Không thể kết nối!");
+            document.getElementById('loading').innerText = 'Không thể kết nối!';
+        });
+    });
+
+}, 300);
+</script>
+
+</body>
 </html>
-
