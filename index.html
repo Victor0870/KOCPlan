@@ -3,76 +3,76 @@
 <head>
     <meta charset="UTF-8">
     <title>Kingdom of Chaos</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="https://download.playfab.com/PlayFabClientApi.js"></script>
     <style>
         body {
+            background: #f0f0f0;
             font-family: Arial, sans-serif;
-            background-color: #f0f0f0;
             text-align: center;
             padding-top: 50px;
         }
         .content {
-            background-color: white;
+            background: white;
             padding: 20px;
             margin: auto;
             width: 300px;
             border-radius: 10px;
-            box-shadow: 0px 0px 10px #ccc;
+            box-shadow: 0px 0px 10px #aaa;
         }
-        button {
-            padding: 10px 20px;
-            font-size: 16px;
-            background-color: #28a745;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-        }
-        #gold_amount {
-            font-weight: bold;
+        .gold {
             color: goldenrod;
+            font-weight: bold;
         }
     </style>
 </head>
 <body>
-    <div class="content">
-        <h1>Kingdom of Chaos</h1>
-        <p>Dân số: 50 người</p>
-        <p>Vàng: <span id="gold_amount">Loading...</span></p>
-        <button onclick="upgradeCastle()">Nâng cấp lâu đài</button>
-    </div>
 
-    <script src="https://download.playfab.com/PlayFabClientApi.js"></script>
-    <script>
-    PlayFab.settings.titleId = "188E8A"; // <-- Sếp thay bằng TitleId thực tế
+<div class="content">
+    <h1>Kingdom of Chaos</h1>
+    <p>Dân số: 50 người</p>
+    <p>Vàng: <span id="gold_amount">Loading...</span></p>
+</div>
+
+<script>
+PlayFab.settings.titleId = "188E8A"; // <--- Sửa đúng TitleId của game sếp
+
+window.onload = function() {
+    Telegram.WebApp.ready();
+
+    let telegramUser = Telegram.WebApp.initDataUnsafe.user;
+
+    if (!telegramUser || !telegramUser.id) {
+        alert("Không lấy được Telegram ID. Vui lòng kiểm tra lại!");
+        return;
+    }
 
     PlayFabClientSDK.LoginWithCustomID({
         TitleId: PlayFab.settings.titleId,
-        CustomId: Telegram.WebApp.initDataUnsafe.user.id.toString(),
+        CustomId: telegramUser.id.toString(),
         CreateAccount: true
     }, function(result) {
-        console.log("Đăng nhập thành công", result);
+        console.log("Đăng nhập thành công!", result);
         loadGold();
     }, function(error) {
-        console.error("Đăng nhập lỗi:", error);
+        console.error("Đăng nhập PlayFab thất bại!", error);
+        alert("Lỗi đăng nhập PlayFab!");
     });
+};
 
-    function loadGold() {
-        PlayFabClientSDK.GetUserInventory({}, function(result) {
-            let gold = 0;
-            if (result.data.VirtualCurrency && result.data.VirtualCurrency.GD !== undefined) {
-                gold = result.data.VirtualCurrency.GD;
-            }
-            document.getElementById("gold_amount").innerText = gold;
-        }, function(error) {
-            console.error("Lỗi load vàng:", error);
-        });
-    }
+function loadGold() {
+    PlayFabClientSDK.GetUserInventory({}, function(result) {
+        let gold = 0;
+        if (result.data.VirtualCurrency && result.data.VirtualCurrency.GD !== undefined) {
+            gold = result.data.VirtualCurrency.GD;
+        }
+        document.getElementById("gold_amount").innerText = gold;
+    }, function(error) {
+        console.error("Lỗi khi lấy số vàng!", error);
+        document.getElementById("gold_amount").innerText = "Error";
+    });
+}
+</script>
 
-    function upgradeCastle() {
-        Telegram.WebApp.sendData("nang_cap_lau_dai");
-    }
-
-    Telegram.WebApp.ready();
-    </script>
 </body>
 </html>
