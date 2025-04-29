@@ -1,12 +1,14 @@
-<!DOCTYPE html><html lang="en">
+<!DOCTYPE html>
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Kingdom of Chaos</title>
     <script src="https://download.playfab.com/PlayFabClientApi.js"></script>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         body {
-            background-color: #f0f0f0;
+            background: #f0f0f0;
             font-family: Arial, sans-serif;
             margin: 0;
             padding: 0;
@@ -44,34 +46,94 @@
         }
     </style>
 </head>
-<body><div id="loading">Loading game...</div><div id="homepage">
+<body>
+
+<div id="loading">Loading game...</div>
+
+<div id="homepage">
     <div class="resource-bar">
         <div class="resource-item">Field: <span id="fd">0</span></div>
         <div class="resource-item">Wood: <span id="wd">0</span></div>
         <div class="resource-item">Iron: <span id="ir">0</span></div>
         <div class="resource-item">Stone: <span id="st">0</span></div>
-    </div><h1>Welcome to Kingdom of Chaos!</h1>
-<p>Grow your empire and conquer the world!</p>
+    </div>
 
-<!-- Nút lâu đài sẽ thêm sau -->
+    <h1>Welcome to Kingdom of Chaos!</h1>
+    <p>Grow your empire and conquer the world!</p>
+</div>
 
-</div><script>
-// Thiet lap PlayFab
-PlayFab.settings.titleId = "188E8A"; // TitleId that you provided
+<script>
+// Setup PlayFab
+PlayFab.settings.titleId = "188E8A"; // <- Sửa đúng TitleId của sếp
+
+function login() {
+    PlayFabClientSDK.LoginWithCustomID({
+        TitleId: PlayFab.settings.titleId,
+        CustomId: Telegram.WebApp.initDataUnsafe.user.id.toString(),
+        CreateAccount: true
+    }, function(result) {
+        console.log("Đăng nhập thành công:", result);
+
+        if (result.data.NewlyCreated) {
+            console.log("Tài khoản mới -> Grant 0 vào các tài nguyên.");
+            grantZeroCurrency(["FD", "WD", "IR", "ST"], function() {
+                loadResources();
+            });
+        } else {
+            loadResources();
+        }
+
+    }, function(error) {
+        console.error("Đăng nhập lỗi:", error);
+        alert("Lỗi đăng nhập PlayFab!");
+        document.getElementById('loading').innerText = 'Lỗi đăng nhập!';
+    });
+}
+
+function grantZeroCurrency(currencies, callback) {
+    let count = 0;
+    currencies.forEach(code => {
+        PlayFabClientSDK.AddUserVirtualCurrency({
+            VirtualCurrency: code,
+            Amount: 0
+        }, function(result) {
+            console.log(`Grant 0 vào ${code} thành công.`);
+            count++;
+            if (count === currencies.length) {
+                callback();
+            }
+        }, function(error) {
+            console.error(`Lỗi grant 0 ${code}:`, error);
+            alert(`Lỗi grant ${code}`);
+            document.getElementById('loading').innerText = 'Lỗi grant tài nguyên!';
+        });
+    });
+}
 
 function loadResources() {
     PlayFabClientSDK.GetUserInventory({}, function(result) {
-        if (!result || !result.data || !result.data.VirtualCurrency) {
-            alert("Không lấy được tài nguyên! Vui lòng thử lại.");
+        if (!result || !result.data) {
+            alert("Không lấy được dữ liệu tài nguyên!");
             document.getElementById('loading').innerText = 'Lỗi tải tài nguyên!';
             return;
         }
 
         const vc = result.data.VirtualCurrency;
+        if (!vc) {
+            alert("Không có dữ liệu tài nguyên!");
+            document.getElementById('loading').innerText = 'Lỗi tải tài nguyên!';
+            return;
+        }
 
-        if (vc.FD === undefined || vc.WD === undefined || vc.IR === undefined || vc.ST === undefined) {
-            alert("Thiếu tài nguyên! Vui lòng kiểm tra lại.");
-            document.getElementById('loading').innerText = 'Lỗi thiếu tài nguyên!';
+        const missing = [];
+        if (vc.FD === undefined) missing.push("FD");
+        if (vc.WD === undefined) missing.push("WD");
+        if (vc.IR === undefined) missing.push("IR");
+        if (vc.ST === undefined) missing.push("ST");
+
+        if (missing.length > 0) {
+            alert("Thiếu tài nguyên: " + missing.join(", "));
+            document.getElementById('loading').innerText = 'Thiếu tài nguyên!';
             return;
         }
 
@@ -82,6 +144,7 @@ function loadResources() {
 
         document.getElementById('loading').style.display = 'none';
         document.getElementById('homepage').style.display = 'block';
+
     }, function(error) {
         console.error("Lỗi khi lấy tài nguyên:", error);
         alert("Kết nối server thất bại!");
@@ -89,23 +152,9 @@ function loadResources() {
     });
 }
 
-function login() {
-    PlayFabClientSDK.LoginWithCustomID({
-        TitleId: PlayFab.settings.titleId,
-        CustomId: Telegram.WebApp.initDataUnsafe.user.id.toString(),
-        CreateAccount: true
-    }, function(result) {
-        console.log("Đăng nhập thành công:", result);
-        loadResources();
-    }, function(error) {
-        console.error("Đăng nhập lỗi:", error);
-        alert("Lỗi đăng nhập PlayFab!");
-        document.getElementById('loading').innerText = 'Lỗi đăng nhập!';
-    });
-}
-
-// Bắt đầu login
 Telegram.WebApp.ready();
 login();
-</script></body>
+</script>
+
+</body>
 </html>
