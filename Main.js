@@ -1,60 +1,58 @@
-PlayFab.settings.titleId = "188E8A";
+// script.js
 
-let loadingProgress = 0;
-let progressInterval;
-let isLoginDone = false;
-let isResourceDone = false;
-
-function startLoadingProgress() {
-    loadingProgress = 0;
-    progressInterval = setInterval(() => {
-        if (loadingProgress < 90) {
-            loadingProgress++;
-            updateProgressBar();
-        } else if (isLoginDone && isResourceDone) {
-            loadingProgress = 100;
-            updateProgressBar();
-            clearInterval(progressInterval);
-            setTimeout(() => {
-                document.getElementById('loading').style.display = 'none';
-                document.getElementById('homepage').style.display = 'block';
-            }, 300);
-        }
-    }, 50);
-}
-
-function updateProgressBar() {
-    document.getElementById('progress-bar').style.width = loadingProgress + "%";
-    document.getElementById('loading-text').innerText = "Loading game... " + loadingProgress + "%";
-}
-
-function login() {
-    PlayFabClientSDK.LoginWithCustomID({
-        TitleId: PlayFab.settings.titleId,
-        CustomId: Telegram.WebApp.initDataUnsafe.user.id.toString(),
-        CreateAccount: true
-    }, function(result) {
-        console.log("Đăng nhập thành công:", result);
-        isLoginDone = true;
-        loadResources();
-    }, function(error) {
-        console.error("Đăng nhập lỗi:", error);
-        alert("Đăng nhập thất bại!");
-    });
-}
-
-function loadResources() {
-    PlayFabClientSDK.GetUserInventory({}, function(result) {
-        if (!result || !result.data) {
-            alert("Không lấy được dữ liệu tài nguyên!");
-            return;
-        }
-        isResourceDone = true;
-    }, function(error) {
-        console.error("Lỗi khi load:", error);
-    });
-}
+// --- Khai bao bien --- let progress = 0; let isLoginDone = false; let progressInterval; let loginTimeout;
 
 Telegram.WebApp.ready();
-startLoadingProgress();
-login();
+
+// Ham bat dau chay loading progress function startLoadingProgress() { const progressBar = document.getElementById("progressBar"); const progressText = document.getElementById("progressText");
+
+progressInterval = setInterval(() => {
+    if (progress < 90) {
+        progress++;
+        progressBar.style.width = progress + "%";
+        progressText.innerText = progress + "%";
+    }
+    // Khi da login xong thi fill 100% va chuyen scene
+    if (isLoginDone && progress >= 90) {
+        clearInterval(progressInterval);
+        progress = 100;
+        progressBar.style.width = "100%";
+        progressText.innerText = "100%";
+        setTimeout(() => {
+            window.location.href = "home.html";
+        }, 500);
+    }
+}, 50); // cap nhat moi 50ms
+
+}
+
+// Ham dang nhap vao PlayFab function login() { PlayFab.settings.titleId = "188E8A"; // Replace thanh TitleId cua sep
+
+PlayFabClientSDK.LoginWithCustomID({
+    TitleId: PlayFab.settings.titleId,
+    CustomId: Telegram.WebApp.initDataUnsafe.user?.id?.toString(),
+    CreateAccount: true
+}, function (result) {
+    console.log("Dang nhap thanh cong:", result);
+    clearTimeout(loginTimeout);
+    isLoginDone = true;
+}, function (error) {
+    console.error("Dang nhap that bai:", error);
+    clearTimeout(loginTimeout);
+    alert("Dang nhap that bai. Vui long thu lai!");
+});
+
+}
+
+// --- CHAY ---
+
+// 1. Cho Telegram san sang -> loading + login setTimeout(() => { startLoadingProgress(); login();
+
+// 2. Neu 10s khong xong thi bao loi
+loginTimeout = setTimeout(() => {
+    clearInterval(progressInterval);
+    alert("Khong ket noi duoc den server. Kiem tra mang!");
+}, 10000);
+
+}, 100);
+
