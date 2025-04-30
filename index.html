@@ -98,26 +98,37 @@ function loadUserDataAndInventory() {
   PlayFabClientSDK.GetUserData({}, function (result) {
     const data = result.data?.Data || {};
 
-    createInitialIfNeeded(data, () => {
-      // Gọi lại để đảm bảo đã có dữ liệu đầy đủ
-      PlayFabClientSDK.GetUserData({}, function (secondResult) {
-        const newData = secondResult.data?.Data || {};
-        updateStorageUI({
-          Food: newData.Food?.Value,
-          Wood: newData.Wood?.Value,
-          Iron: newData.Iron?.Value,
-          Stone: newData.Stone?.Value
-        });
-
-        document.getElementById("loading").style.display = "none";
-        document.getElementById("homepage").style.display = "block";
+    if (!data.CastleLevel) {
+      console.log("Người chơi mới → khởi tạo...");
+      PlayFabClientSDK.ExecuteCloudScript({
+        FunctionName: "createInitialStatic"
+      }, function () {
+        // 🔁 Sau khi tạo xong, GỌI LẠI GetUserData chắc chắn
+        loadUserDataAndInventory();
+      }, function (err) {
+        console.error("Lỗi khi khởi tạo:", err);
+        alert("Lỗi khi tạo tài khoản mới.");
       });
+      return;
+    }
+
+    // 🔽 Dữ liệu đầy đủ → update UI
+    updateStorageUI({
+      Food: data.Food?.Value,
+      Wood: data.Wood?.Value,
+      Iron: data.Iron?.Value,
+      Stone: data.Stone?.Value
     });
+
+    document.getElementById("loading").style.display = "none";
+    document.getElementById("homepage").style.display = "block";
+
   }, function (err) {
-    console.error("Lỗi load dữ liệu:", err);
+    console.error("Lỗi GetUserData:", err);
     document.getElementById("loading").innerText = 'Lỗi tải dữ liệu!';
   });
 }
+
 
 function login() {
   const userId = Telegram.WebApp.initDataUnsafe.user?.id;
