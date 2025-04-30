@@ -71,26 +71,7 @@
 Telegram.WebApp.ready();
 PlayFab.settings.titleId = "188E8A";
 
-  function login() {
-  const userId = Telegram.WebApp.initDataUnsafe.user?.id;
-  if (!userId) {
-    document.getElementById('loading').innerText = 'Không lấy được Telegram ID!';
-    alert("Lỗi không lấy được ID người dùng từ Telegram");
-    return;
-  }
 
-  PlayFabClientSDK.LoginWithCustomID({
-    TitleId: PlayFab.settings.titleId,
-    CustomId: userId.toString(),
-    CreateAccount: true
-  }, function (result) {
-    console.log("Đăng nhập thành công:", result);
-    loadUserDataAndInventory();
-  }, function (error) {
-    console.error("Lỗi đăng nhập:", error);
-    document.getElementById('loading').innerText = 'Đăng nhập thất bại!';
-  });
-}
   
 function updateStorageUI(data) {
   document.getElementById("food").innerText = data.Food || 0;
@@ -150,7 +131,26 @@ function loadUserDataAndInventory() {
   });
 }
 
+  function login() {
+  const userId = Telegram.WebApp.initDataUnsafe.user?.id;
+  if (!userId) {
+    document.getElementById('loading').innerText = 'Không lấy được Telegram ID!';
+    alert("Lỗi không lấy được ID người dùng từ Telegram");
+    return;
+  }
 
+  PlayFabClientSDK.LoginWithCustomID({
+    TitleId: PlayFab.settings.titleId,
+    CustomId: userId.toString(),
+    CreateAccount: true
+  }, function (result) {
+    console.log("Đăng nhập thành công:", result);
+    loadUserDataAndInventory();
+  }, function (error) {
+    console.error("Lỗi đăng nhập:", error);
+    document.getElementById('loading').innerText = 'Đăng nhập thất bại!';
+  });
+}
 
 
 
