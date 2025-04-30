@@ -62,7 +62,7 @@
     <div class="resource-item">Iron: <span id="iron">0</span></div>
     <div class="resource-item">Stone: <span id="stone">0</span></div>
   </div>
-  <h1>Welcome to Kingdom of Chaos 1.1!</h1>
+  <h1>Welcome to Kingdom of Chaos 1.2!</h1>
   <p>Grow your empire and conquer the world!</p>
   <button onclick="harvest()">Thu Hoạch</button>
 </div>
@@ -71,8 +71,6 @@
 Telegram.WebApp.ready();
 PlayFab.settings.titleId = "188E8A";
 
-
-  
 function updateStorageUI(data) {
   document.getElementById("food").innerText = data.Food || 0;
   document.getElementById("wood").innerText = data.Wood || 0;
@@ -80,41 +78,26 @@ function updateStorageUI(data) {
   document.getElementById("stone").innerText = data.Stone || 0;
 }
 
-function createInitialIfNeeded(data, callback) {
-  if (!data.CastleLevel) {
-    PlayFabClientSDK.ExecuteCloudScript({
-      FunctionName: "createInitialStatic"
-    }, function (res) {
-      console.log("Đã khởi tạo dữ liệu người chơi.");
-      callback();
-    }, function (err) {
-      console.error("Lỗi khởi tạo dữ liệu:", err);
-      alert("Lỗi khi tạo tài khoản mới.");
-    });
-  } else {
-    callback();
-  }
-}
-
 function loadUserDataAndInventory() {
   PlayFabClientSDK.GetUserData({}, function (result) {
     const data = result.data?.Data || {};
 
     if (!data.CastleLevel) {
-      console.log("Người chơi mới → khởi tạo...");
+      console.log("Chưa có CastleLevel → gọi createInitialStatic");
       PlayFabClientSDK.ExecuteCloudScript({
         FunctionName: "createInitialStatic"
-      }, function () {
-        // 🔁 Sau khi tạo xong, GỌI LẠI GetUserData chắc chắn
-        loadUserDataAndInventory();
+      }, function (res) {
+        console.log("Đã tạo dữ liệu mới:", res);
+        // Sau khi khởi tạo xong → gọi lại chính hàm này
+        setTimeout(() => loadUserDataAndInventory(), 200); // nhỏ delay chút để PlayFab update kịp
       }, function (err) {
-        console.error("Lỗi khi khởi tạo:", err);
-        alert("Lỗi khi tạo tài khoản mới.");
+        console.error("Lỗi khi tạo dữ liệu mới:", err);
+        document.getElementById("loading").innerText = "Lỗi khởi tạo tài khoản!";
       });
       return;
     }
 
-    // 🔽 Dữ liệu đầy đủ → update UI
+    // Đã có dữ liệu đầy đủ → hiển thị UI
     updateStorageUI({
       Food: data.Food?.Value,
       Wood: data.Wood?.Value,
@@ -124,18 +107,16 @@ function loadUserDataAndInventory() {
 
     document.getElementById("loading").style.display = "none";
     document.getElementById("homepage").style.display = "block";
-
   }, function (err) {
     console.error("Lỗi GetUserData:", err);
-    document.getElementById("loading").innerText = 'Lỗi tải dữ liệu!';
+    document.getElementById("loading").innerText = "Không lấy được dữ liệu!";
   });
 }
 
-  function login() {
+function login() {
   const userId = Telegram.WebApp.initDataUnsafe.user?.id;
   if (!userId) {
-    document.getElementById('loading').innerText = 'Không lấy được Telegram ID!';
-    alert("Lỗi không lấy được ID người dùng từ Telegram");
+    document.getElementById("loading").innerText = "Không có Telegram ID!";
     return;
   }
 
@@ -143,17 +124,14 @@ function loadUserDataAndInventory() {
     TitleId: PlayFab.settings.titleId,
     CustomId: userId.toString(),
     CreateAccount: true
-  }, function (result) {
-    console.log("Đăng nhập thành công:", result);
+  }, function (res) {
+    console.log("Đăng nhập thành công:", res);
     loadUserDataAndInventory();
-  }, function (error) {
-    console.error("Lỗi đăng nhập:", error);
-    document.getElementById('loading').innerText = 'Đăng nhập thất bại!';
+  }, function (err) {
+    console.error("Lỗi đăng nhập:", err);
+    document.getElementById("loading").innerText = "Lỗi đăng nhập!";
   });
 }
-
-
-
 
 function harvest() {
   PlayFabClientSDK.ExecuteCloudScript({
@@ -162,13 +140,14 @@ function harvest() {
     const storage = res.data?.FunctionResult?.updatedStorage || {};
     updateStorageUI(storage);
   }, function (err) {
-    console.error("Lỗi khi thu hoạch:", err);
-    alert("Lỗi server khi thu hoạch!");
+    console.error("Lỗi harvest:", err);
+    alert("Thu hoạch thất bại!");
   });
 }
 
 setTimeout(() => login(), 300);
 </script>
+
 
 </body>
 </html>
