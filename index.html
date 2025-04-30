@@ -62,7 +62,7 @@
     <div class="resource-item">Iron: <span id="iron">0</span></div>
     <div class="resource-item">Stone: <span id="stone">0</span></div>
   </div>
-  <h1>Welcome to Kingdom of Chaos!</h1>
+  <h1>Welcome to Kingdom of Chaos 1.1!</h1>
   <p>Grow your empire and conquer the world!</p>
   <button onclick="harvest()">Thu Hoạch</button>
 </div>
@@ -119,20 +119,21 @@ function loadUserDataAndInventory() {
   PlayFabClientSDK.GetUserData({}, function (result) {
     const data = result.data?.Data || {};
 
-    // Nếu chưa có CastleLevel → khởi tạo
     if (!data.CastleLevel) {
+      console.log("Người chơi mới → khởi tạo...");
       PlayFabClientSDK.ExecuteCloudScript({
         FunctionName: "createInitialStatic"
       }, function () {
-        console.log("Đã gọi khởi tạo player.");
-        // Gọi lại lần 2 để lấy dữ liệu đầy đủ
+        // 🔁 Sau khi tạo xong, GỌI LẠI GetUserData chắc chắn
         loadUserDataAndInventory();
       }, function (err) {
-        console.error("Lỗi khi gọi createInitialStatic:", err);
+        console.error("Lỗi khi khởi tạo:", err);
+        alert("Lỗi khi tạo tài khoản mới.");
       });
       return;
     }
 
+    // 🔽 Dữ liệu đầy đủ → update UI
     updateStorageUI({
       Food: data.Food?.Value,
       Wood: data.Wood?.Value,
@@ -142,8 +143,13 @@ function loadUserDataAndInventory() {
 
     document.getElementById("loading").style.display = "none";
     document.getElementById("homepage").style.display = "block";
+
+  }, function (err) {
+    console.error("Lỗi GetUserData:", err);
+    document.getElementById("loading").innerText = 'Lỗi tải dữ liệu!';
   });
 }
+
 
 
 
