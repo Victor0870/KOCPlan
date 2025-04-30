@@ -78,19 +78,43 @@ function updateStorageUI(data) {
   document.getElementById("stone").innerText = data.Stone || 0;
 }
 
+function createInitialIfNeeded(data, callback) {
+  if (!data.CastleLevel) {
+    PlayFabClientSDK.ExecuteCloudScript({
+      FunctionName: "createInitialStatic"
+    }, function (res) {
+      console.log("Đã khởi tạo dữ liệu người chơi.");
+      callback();
+    }, function (err) {
+      console.error("Lỗi khởi tạo dữ liệu:", err);
+      alert("Lỗi khi tạo tài khoản mới.");
+    });
+  } else {
+    callback();
+  }
+}
+
 function loadUserDataAndInventory() {
   PlayFabClientSDK.GetUserData({}, function (result) {
     const data = result.data?.Data || {};
-    updateStorageUI({
-      Food: data.Food?.Value,
-      Wood: data.Wood?.Value,
-      Iron: data.Iron?.Value,
-      Stone: data.Stone?.Value
+
+    createInitialIfNeeded(data, () => {
+      // Gọi lại để đảm bảo đã có dữ liệu đầy đủ
+      PlayFabClientSDK.GetUserData({}, function (secondResult) {
+        const newData = secondResult.data?.Data || {};
+        updateStorageUI({
+          Food: newData.Food?.Value,
+          Wood: newData.Wood?.Value,
+          Iron: newData.Iron?.Value,
+          Stone: newData.Stone?.Value
+        });
+
+        document.getElementById("loading").style.display = "none";
+        document.getElementById("homepage").style.display = "block";
+      });
     });
-    document.getElementById("loading").style.display = "none";
-    document.getElementById("homepage").style.display = "block";
   }, function (err) {
-    console.error("Lỗi load tồn kho:", err);
+    console.error("Lỗi load dữ liệu:", err);
     document.getElementById("loading").innerText = 'Lỗi tải dữ liệu!';
   });
 }
@@ -118,9 +142,9 @@ function login() {
 
 function harvest() {
   PlayFabClientSDK.ExecuteCloudScript({
-    FunctionName: "harvestResource"
+    FunctionName: "harvestAllTerritories"
   }, function (res) {
-    const storage = res.data?.FunctionResult?.storage || {};
+    const storage = res.data?.FunctionResult?.updatedStorage || {};
     updateStorageUI(storage);
   }, function (err) {
     console.error("Lỗi khi thu hoạch:", err);
