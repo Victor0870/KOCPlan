@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -37,10 +36,18 @@
       position: sticky;
       top: 0;
       z-index: 1000;
+      flex-wrap: wrap;
     }
     .resource-item {
       font-size: 16px;
       font-weight: bold;
+    }
+    #player-name {
+      font-size: 14px;
+      margin-top: 5px;
+      font-style: italic;
+      color: #555;
+      width: 100%;
     }
     button {
       margin-top: 20px;
@@ -59,13 +66,13 @@
     <div class="resource-item">Wood: <span id="wood">0</span></div>
     <div class="resource-item">Iron: <span id="iron">0</span></div>
     <div class="resource-item">Stone: <span id="stone">0</span></div>
+    <div id="player-name"></div> <!-- REMARK: Thêm dòng hiển thị tên người chơi -->
   </div>
-  <button onclick="harvest()">Thu Hoạch</button>
+  <button id="harvestBtn" onclick="harvest()">Thu Hoạch</button> <!-- REMARK: Gán id để disable -->
 </div>
 
-
-
-
+<!-- REMARK: Thêm SDK PlayFab -->
+<script src="https://download.playfab.com/PlayFabClientApi.js"></script>
 <script>
 PlayFab.settings.titleId = "188E8A";
 
@@ -111,10 +118,15 @@ function loadPlayerStatic(callback) {
 
 function login() {
   let userId;
+  let playerName = "Người chơi ẩn danh"; // REMARK: tên mặc định
+
   if (typeof Telegram !== "undefined" && Telegram.WebApp?.initDataUnsafe?.user?.id) {
+    Telegram.WebApp.ready(); // REMARK: Gọi ready khi có WebApp
     userId = Telegram.WebApp.initDataUnsafe.user.id;
+    const user = Telegram.WebApp.initDataUnsafe.user;
+    playerName = `${user.first_name || ""} ${user.last_name || ""}`.trim();
   } else {
-    userId = "web_" + Math.floor(Math.random() * 1000000); // fallback ID for browser
+    userId = "web_" + Math.floor(Math.random() * 1000000);
   }
 
   PlayFabClientSDK.LoginWithCustomID({
@@ -130,6 +142,7 @@ function login() {
         Stone: userData.Stone?.Value
       });
 
+      document.getElementById("player-name").innerText = playerName; // REMARK: hiển thị tên
       document.getElementById("loading").style.display = "none";
       document.getElementById("homepage").style.display = "block";
     });
@@ -139,13 +152,21 @@ function login() {
 }
 
 function harvest() {
+  const btn = document.getElementById("harvestBtn"); // REMARK: disable nút khi bấm
+  btn.disabled = true;
+  btn.innerText = "Đang thu hoạch...";
+
   PlayFabClientSDK.ExecuteCloudScript({
     FunctionName: "harvestAllTerritories"
   }, function (res) {
     const storage = res.data?.FunctionResult?.updatedStorage || {};
     updateStorageUI(storage);
+    btn.disabled = false;
+    btn.innerText = "Thu Hoạch";
   }, function () {
     alert("Lỗi khi thu hoạch!");
+    btn.disabled = false;
+    btn.innerText = "Thu Hoạch";
   });
 }
 
