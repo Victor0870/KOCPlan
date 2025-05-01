@@ -1,74 +1,29 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Kingdom of Chaos</title>
-  <style>
-    body {
-      background: #f0f0f0;
-      font-family: Arial, sans-serif;
-      margin: 0;
-      padding: 0;
-      overflow-x: hidden;
-    }
-    #loading {
-      width: 100%;
-      height: 100vh;
-      background: #000;
-      color: #fff;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      font-size: 24px;
-    }
-    #homepage {
-      padding: 20px;
-      text-align: center;
-      display: none;
-    }
-    .resource-bar {
-      background: #fff;
-      padding: 10px;
-      display: flex;
-      justify-content: space-around;
-      align-items: center;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-      position: sticky;
-      top: 0;
-      z-index: 1000;
-    }
-    .resource-item {
-      font-size: 16px;
-      font-weight: bold;
-    }
-    button {
-      margin-top: 20px;
-      padding: 10px 20px;
-      font-size: 16px;
-    }
-  </style>
   <script src="https://download.playfab.com/PlayFabClientApi.js"></script>
-  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <style>
+    body { font-family: Arial; padding: 20px; background: #fff; }
+    #loading { font-size: 20px; margin-bottom: 20px; }
+    .resource-item { margin: 10px 0; }
+  </style>
 </head>
 <body>
 
 <div id="loading">Loading game...</div>
 
-<div id="homepage">
-  <div class="resource-bar">
-    <div class="resource-item">Food: <span id="food">0</span></div>
-    <div class="resource-item">Wood: <span id="wood">0</span></div>
-    <div class="resource-item">Iron: <span id="iron">0</span></div>
-    <div class="resource-item">Stone: <span id="stone">0</span></div>
-  </div>
-  <h1>Welcome to Kingdom of Chaos 1.3!</h1>
-  <p>Grow your empire and conquer the world!</p>
+<div id="homepage" style="display:none;">
+  <div class="resource-item">Food: <span id="food">0</span></div>
+  <div class="resource-item">Wood: <span id="wood">0</span></div>
+  <div class="resource-item">Iron: <span id="iron">0</span></div>
+  <div class="resource-item">Stone: <span id="stone">0</span></div>
   <button onclick="harvest()">Thu Hoạch</button>
 </div>
 
 <script>
-Telegram.WebApp.ready();
 PlayFab.settings.titleId = "188E8A";
 
 function updateStorageUI(data) {
@@ -78,57 +33,64 @@ function updateStorageUI(data) {
   document.getElementById("stone").innerText = data.Stone || 0;
 }
 
-function loadUserDataAndInventory() {
+function callCreateStatic(callback) {
+  PlayFabClientSDK.ExecuteCloudScript({
+    FunctionName: "createInitialStatic"
+  }, function () {
+    setTimeout(() => callback(), 500);
+  }, function () {
+    document.getElementById("loading").innerText = "Lỗi tạo dữ liệu!";
+  });
+}
+
+function loadPlayerStatic(callback) {
   PlayFabClientSDK.GetUserData({}, function (result) {
     const data = result.data?.Data || {};
+    const hasStatic = ["CastleLevel", "MaxTerritorySlot", "Territories"]
+      .every(k => k in data);
 
-    if (!data.CastleLevel) {
-      console.log("Chưa có CastleLevel → gọi createInitialStatic");
-      PlayFabClientSDK.ExecuteCloudScript({
-        FunctionName: "createInitialStatic"
-      }, function (res) {
-        console.log("Đã tạo dữ liệu mới:", res);
-        // Sau khi khởi tạo xong → gọi lại chính hàm này
-        setTimeout(() => loadUserDataAndInventory(), 200); // nhỏ delay chút để PlayFab update kịp
-      }, function (err) {
-        console.error("Lỗi khi tạo dữ liệu mới:", err);
-        document.getElementById("loading").innerText = "Lỗi khởi tạo tài khoản!";
-      });
+    if (!hasStatic) {
+      callCreateStatic(() => loadPlayerStatic(callback));
       return;
     }
 
-    // Đã có dữ liệu đầy đủ → hiển thị UI
-    updateStorageUI({
-      Food: data.Food?.Value,
-      Wood: data.Wood?.Value,
-      Iron: data.Iron?.Value,
-      Stone: data.Stone?.Value
+    PlayFabClientSDK.GetUserInventory({}, function (inv) {
+      const vc = inv.data?.VirtualCurrency || {};
+      callback(data, vc);
+    }, function () {
+      document.getElementById("loading").innerText = "Lỗi tải Inventory!";
     });
 
-    document.getElementById("loading").style.display = "none";
-    document.getElementById("homepage").style.display = "block";
-  }, function (err) {
-    console.error("Lỗi GetUserData:", err);
-    document.getElementById("loading").innerText = "Không lấy được dữ liệu!";
+  }, function () {
+    document.getElementById("loading").innerText = "Lỗi load dữ liệu!";
   });
 }
 
 function login() {
-  const userId = Telegram.WebApp.initDataUnsafe.user?.id;
-  if (!userId) {
-    document.getElementById("loading").innerText = "Không có Telegram ID!";
-    return;
+  let userId;
+  if (typeof Telegram !== "undefined" && Telegram.WebApp?.initDataUnsafe?.user?.id) {
+    userId = Telegram.WebApp.initDataUnsafe.user.id;
+  } else {
+    userId = "web_" + Math.floor(Math.random() * 1000000); // fallback ID for browser
   }
 
   PlayFabClientSDK.LoginWithCustomID({
     TitleId: PlayFab.settings.titleId,
     CustomId: userId.toString(),
     CreateAccount: true
-  }, function (res) {
-    console.log("Đăng nhập thành công:", res);
-    loadUserDataAndInventory();
-  }, function (err) {
-    console.error("Lỗi đăng nhập:", err);
+  }, function () {
+    loadPlayerStatic((userData, virtualCurrency) => {
+      updateStorageUI({
+        Food: userData.Food?.Value,
+        Wood: userData.Wood?.Value,
+        Iron: userData.Iron?.Value,
+        Stone: userData.Stone?.Value
+      });
+
+      document.getElementById("loading").style.display = "none";
+      document.getElementById("homepage").style.display = "block";
+    });
+  }, function () {
     document.getElementById("loading").innerText = "Lỗi đăng nhập!";
   });
 }
@@ -139,15 +101,13 @@ function harvest() {
   }, function (res) {
     const storage = res.data?.FunctionResult?.updatedStorage || {};
     updateStorageUI(storage);
-  }, function (err) {
-    console.error("Lỗi harvest:", err);
-    alert("Thu hoạch thất bại!");
+  }, function () {
+    alert("Lỗi khi thu hoạch!");
   });
 }
 
 setTimeout(() => login(), 300);
 </script>
-
 
 </body>
 </html>
