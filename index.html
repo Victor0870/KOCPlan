@@ -4,24 +4,67 @@
 <head>
   <meta charset="UTF-8" />
   <title>Kingdom of Chaos</title>
-  <script src="https://download.playfab.com/PlayFabClientApi.js"></script>
   <style>
-    body { font-family: Arial; padding: 20px; background: #fff; }
-    #loading { font-size: 20px; margin-bottom: 20px; }
-    .resource-item { margin: 10px 0; }
+    body {
+      background: #f0f0f0;
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      overflow-x: hidden;
+    }
+    #loading {
+      width: 100%;
+      height: 100vh;
+      background: #000;
+      color: #fff;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 24px;
+    }
+    #homepage {
+      padding: 20px;
+      text-align: center;
+      display: none;
+    }
+    .resource-bar {
+      background: #fff;
+      padding: 10px;
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+    }
+    .resource-item {
+      font-size: 16px;
+      font-weight: bold;
+    }
+    button {
+      margin-top: 20px;
+      padding: 10px 20px;
+      font-size: 16px;
+    }
   </style>
 </head>
 <body>
 
 <div id="loading">Loading game...</div>
 
-<div id="homepage" style="display:none;">
-  <div class="resource-item">Food: <span id="food">0</span></div>
-  <div class="resource-item">Wood: <span id="wood">0</span></div>
-  <div class="resource-item">Iron: <span id="iron">0</span></div>
-  <div class="resource-item">Stone: <span id="stone">0</span></div>
+<div id="homepage">
+  <div class="resource-bar">
+    <div class="resource-item">Food: <span id="food">0</span></div>
+    <div class="resource-item">Wood: <span id="wood">0</span></div>
+    <div class="resource-item">Iron: <span id="iron">0</span></div>
+    <div class="resource-item">Stone: <span id="stone">0</span></div>
+  </div>
   <button onclick="harvest()">Thu Hoạch</button>
 </div>
+
+
+
 
 <script>
 PlayFab.settings.titleId = "188E8A";
