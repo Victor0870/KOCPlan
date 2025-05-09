@@ -128,8 +128,15 @@ function loadPlayerStatic(callback) {
 }
 
 function login() {
+  // Kiểm tra Telegram SDK
+  if (typeof Telegram === "undefined" || !Telegram.WebApp?.initDataUnsafe?.user?.id) {
+    document.getElementById("loading").innerText = "Vui lòng mở game từ Telegram!";
+    return;
+  }
+
   Telegram.WebApp.ready();
-  const userId = Telegram.WebApp.initDataUnsafe.user.id.toString();
+  const tgUser = Telegram.WebApp.initDataUnsafe.user;
+  const userId = tgUser.id.toString();
 
   PlayFabClientSDK.LoginWithCustomID({
     TitleId: PlayFab.settings.titleId,
@@ -144,12 +151,24 @@ function login() {
         Stone: userData.Stone?.Value
       });
 
-      cachedTerritories = JSON.parse(userData.Territories?.Value || "[]");
+      // Bắt lỗi JSON.parse
+      try {
+        cachedTerritories = JSON.parse(userData.Territories?.Value || "[]");
+      } catch (e) {
+        console.error("Lỗi phân tích Territories:", e);
+        cachedTerritories = [];
+      }
+
+      // Cập nhật tên người chơi
+      const fullName = `${tgUser.first_name || ""} ${tgUser.last_name || ""}`.trim();
+      document.getElementById("player-name").innerText = `Người chơi: ${fullName}`;
+
       document.getElementById("loading").style.display = "none";
       document.getElementById("homepage").style.display = "block";
     });
-  }, function () {
-    document.getElementById("loading").innerText = "Lỗi đăng nhập!";
+  }, function (err) {
+    console.error("Lỗi đăng nhập:", err);
+    document.getElementById("loading").innerText = "Lỗi đăng nhập: " + (err?.errorMessage || "Không rõ nguyên nhân");
   });
 }
 
