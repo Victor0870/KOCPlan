@@ -137,7 +137,10 @@ function login() {
     TitleId: PlayFab.settings.titleId,
     CustomId: userId,
     CreateAccount: true
-  }, function () {
+  }, function (result) {
+    console.log("Đăng nhập thành công:", result);
+
+    // Luôn gọi load để kiểm tra dữ liệu đủ hay không
     loadPlayerStatic((userData, virtualCurrency) => {
       updateStorageUI({
         Food: userData.Food?.Value,
@@ -154,6 +157,7 @@ function login() {
     document.getElementById("loading").innerText = "Lỗi đăng nhập!";
   });
 }
+
 
 
 function harvest() {
