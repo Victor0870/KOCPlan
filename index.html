@@ -107,8 +107,7 @@ function callCreateStatic(callback) {
 function loadPlayerStatic(callback) {
   PlayFabClientSDK.GetUserData({}, function (result) {
     const data = result.data?.Data || {};
-    const hasStatic = ["CastleLevel", "MaxTerritorySlot", "Territories"]
-      .every(k => k in data);
+    const hasStatic = ["CastleLevel", "MaxTerritorySlot", "Territories"].every(k => k in data);
 
     if (!hasStatic) {
       callCreateStatic(() => loadPlayerStatic(callback));
@@ -128,115 +127,59 @@ function loadPlayerStatic(callback) {
 }
 
 function login() {
-  // Kiểm tra Telegram SDK
-  if (typeof Telegram === "undefined" || !Telegram.WebApp?.initDataUnsafe?.user?.id) {
-    document.getElementById("loading").innerText = "Vui lòng mở game từ Telegram!";
+  if (typeof Telegram === "undefined" || !Telegram.WebApp) {
+    document.getElementById("loading").innerText = "Không tìm thấy Telegram WebApp!";
     return;
   }
 
   Telegram.WebApp.ready();
-  const tgUser = Telegram.WebApp.initDataUnsafe.user;
-  const userId = tgUser.id.toString();
 
-  PlayFabClientSDK.LoginWithCustomID({
-    TitleId: PlayFab.settings.titleId,
-    CustomId: userId,
-    CreateAccount: true
-  }, function () {
-    loadPlayerStatic((userData, virtualCurrency) => {
-      updateStorageUI({
-        Food: userData.Food?.Value,
-        Wood: userData.Wood?.Value,
-        Iron: userData.Iron?.Value,
-        Stone: userData.Stone?.Value
+  setTimeout(() => {
+    const user = Telegram.WebApp.initDataUnsafe?.user;
+
+    if (!user?.id) {
+      document.getElementById("loading").innerText = "Không có thông tin người dùng Telegram!";
+      return;
+    }
+
+    const userId = user.id.toString();
+    const fullName = `${user.first_name || ""} ${user.last_name || ""}`.trim();
+    document.getElementById("player-name").innerText = `Người chơi: ${fullName}`;
+
+    PlayFabClientSDK.LoginWithCustomID({
+      TitleId: PlayFab.settings.titleId,
+      CustomId: userId,
+      CreateAccount: true
+    }, function () {
+      loadPlayerStatic((userData, virtualCurrency) => {
+        updateStorageUI({
+          Food: userData.Food?.Value,
+          Wood: userData.Wood?.Value,
+          Iron: userData.Iron?.Value,
+          Stone: userData.Stone?.Value
+        });
+
+        try {
+          cachedTerritories = JSON.parse(userData.Territories?.Value || "[]");
+        } catch (e) {
+          console.error("Lỗi parse Territory:", e);
+          cachedTerritories = [];
+        }
+
+        document.getElementById("loading").style.display = "none";
+        document.getElementById("homepage").style.display = "block";
       });
-
-      // Bắt lỗi JSON.parse
-      try {
-        cachedTerritories = JSON.parse(userData.Territories?.Value || "[]");
-      } catch (e) {
-        console.error("Lỗi phân tích Territories:", e);
-        cachedTerritories = [];
-      }
-
-      // Cập nhật tên người chơi
-      const fullName = `${tgUser.first_name || ""} ${tgUser.last_name || ""}`.trim();
-      document.getElementById("player-name").innerText = `Người chơi: ${fullName}`;
-
-      document.getElementById("loading").style.display = "none";
-      document.getElementById("homepage").style.display = "block";
+    }, function (err) {
+      console.error("Lỗi đăng nhập:", err);
+      document.getElementById("loading").innerText = "Lỗi đăng nhập: " + (err?.errorMessage || "Không rõ nguyên nhân");
     });
-  }, function (err) {
-    console.error("Lỗi đăng nhập:", err);
-    document.getElementById("loading").innerText = "Lỗi đăng nhập: " + (err?.errorMessage || "Không rõ nguyên nhân");
-  });
+  }, 100);
 }
 
+window.addEventListener("DOMContentLoaded", () => {
+  login();
+});
 
-
-function harvest() {
-  const btn = document.getElementById("harvestBtn"); // REMARK: disable nút khi bấm
-  btn.disabled = true;
-  btn.innerText = "Đang thu hoạch...";
-
-  PlayFabClientSDK.ExecuteCloudScript({
-    FunctionName: "harvestAllTerritories"
-  }, function (res) {
-    const storage = res.data?.FunctionResult?.updatedStorage || {};
-    updateStorageUI(storage);
-    btn.disabled = false;
-    btn.innerText = "Thu Hoạch";
-  }, function () {
-    alert("Lỗi khi thu hoạch!");
-    btn.disabled = false;
-    btn.innerText = "Thu Hoạch";
-  });
-}
-
-setTimeout(() => login(), 300);
-
-let cachedTerritories = []; // REMARK: Lưu lại territory để dùng khi chuyển màn
-
-function updateTerritoryUI(territories) {
-  const grid = document.getElementById("territory-grid");
-  grid.innerHTML = "";
-
-  // Đảm bảo có 9 ô
-  const fullTerritories = Array.from({ length: 9 }, (_, i) => territories[i] || { type: 0, level: 0 });
-
-  for (let i = 0; i < 9; i++) {
-    const tile = fullTerritories[i];
-    const div = document.createElement("div");
-    div.style.border = "1px solid #aaa";
-    div.style.padding = "10px";
-    div.style.background = "#fff";
-    div.style.minHeight = "80px";
-    div.innerHTML = `<strong>Ô ${i + 1}</strong><br>${
-      tile.type > 0
-        ? `Type: ${tile.type}<br>Level: ${tile.level}`
-        : `<em>Ô đất trống</em>`
-    }`;
-    grid.appendChild(div);
-  }
-}
-
-
-function openTerritory() {
-  document.getElementById("homepage").style.display = "none";
-  document.getElementById("territory-page").style.display = "block";
-  updateTerritoryUI(cachedTerritories);
-
-  // Cập nhật thanh tài nguyên trên giao diện territory
-  document.getElementById("food2").innerText = document.getElementById("food").innerText;
-  document.getElementById("wood2").innerText = document.getElementById("wood").innerText;
-  document.getElementById("iron2").innerText = document.getElementById("iron").innerText;
-  document.getElementById("stone2").innerText = document.getElementById("stone").innerText;
-}
-
-function goHome() {
-  document.getElementById("territory-page").style.display = "none";
-  document.getElementById("homepage").style.display = "block";
-}
 </script>
 
 </body>
