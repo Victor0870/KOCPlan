@@ -128,11 +128,6 @@ function loadPlayerStatic(callback) {
 }
 
 function login() {
-  if (typeof Telegram === "undefined" || !Telegram.WebApp?.initDataUnsafe?.user?.id) {
-    document.getElementById("loading").innerText = "Vui lòng mở game từ Telegram!";
-    return;
-  }
-
   Telegram.WebApp.ready();
   const user = Telegram.WebApp.initDataUnsafe.user;
   const userId = user.id.toString();
