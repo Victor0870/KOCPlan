@@ -69,8 +69,19 @@
     <div id="player-name"></div> <!-- REMARK: Thêm dòng hiển thị tên người chơi -->
   </div>
   <button id="harvestBtn" onclick="harvest()">Thu Hoạch</button> <!-- REMARK: Gán id để disable -->
+  <button id="manageBtn" onclick="openTerritory()">Quản Lý Xây Dựng</button>
 </div>
-
+<div id="territory-page" style="display:none; padding: 20px; text-align: center;">
+  <div class="resource-bar">
+    <div class="resource-item">Food: <span id="food2">0</span></div>
+    <div class="resource-item">Wood: <span id="wood2">0</span></div>
+    <div class="resource-item">Iron: <span id="iron2">0</span></div>
+    <div class="resource-item">Stone: <span id="stone2">0</span></div>
+  </div>
+  <h3>Quản Lý Lãnh Thổ</h3>
+  <div id="territory-grid" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 20px;"></div>
+  <button onclick="goHome()">Quay Lại</button>
+</div>
 <!-- REMARK: Thêm SDK PlayFab -->
 <script src="https://download.playfab.com/PlayFabClientApi.js"></script>
 <script>
@@ -171,6 +182,40 @@ function harvest() {
 }
 
 setTimeout(() => login(), 300);
+
+let cachedTerritories = []; // REMARK: Lưu lại territory để dùng khi chuyển màn
+
+function updateTerritoryUI(territories) {
+  const grid = document.getElementById("territory-grid");
+  grid.innerHTML = "";
+
+  for (let i = 0; i < territories.length; i++) {
+    const tile = territories[i];
+    const div = document.createElement("div");
+    div.style.border = "1px solid #aaa";
+    div.style.padding = "10px";
+    div.style.background = "#fff";
+    div.innerHTML = `<strong>Ô ${i + 1}</strong><br>Type: ${tile.type}<br>Level: ${tile.level}`;
+    grid.appendChild(div);
+  }
+}
+
+function openTerritory() {
+  document.getElementById("homepage").style.display = "none";
+  document.getElementById("territory-page").style.display = "block";
+  updateTerritoryUI(cachedTerritories);
+
+  // Cập nhật thanh tài nguyên trên giao diện territory
+  document.getElementById("food2").innerText = document.getElementById("food").innerText;
+  document.getElementById("wood2").innerText = document.getElementById("wood").innerText;
+  document.getElementById("iron2").innerText = document.getElementById("iron").innerText;
+  document.getElementById("stone2").innerText = document.getElementById("stone").innerText;
+}
+
+function goHome() {
+  document.getElementById("territory-page").style.display = "none";
+  document.getElementById("homepage").style.display = "block";
+}
 </script>
 
 </body>
