@@ -189,16 +189,25 @@ function updateTerritoryUI(territories) {
   const grid = document.getElementById("territory-grid");
   grid.innerHTML = "";
 
-  for (let i = 0; i < territories.length; i++) {
-    const tile = territories[i];
+  // Đảm bảo có 9 ô
+  const fullTerritories = Array.from({ length: 9 }, (_, i) => territories[i] || { type: 0, level: 0 });
+
+  for (let i = 0; i < 9; i++) {
+    const tile = fullTerritories[i];
     const div = document.createElement("div");
     div.style.border = "1px solid #aaa";
     div.style.padding = "10px";
     div.style.background = "#fff";
-    div.innerHTML = `<strong>Ô ${i + 1}</strong><br>Type: ${tile.type}<br>Level: ${tile.level}`;
+    div.style.minHeight = "80px";
+    div.innerHTML = `<strong>Ô ${i + 1}</strong><br>${
+      tile.type > 0
+        ? `Type: ${tile.type}<br>Level: ${tile.level}`
+        : `<em>Ô đất trống</em>`
+    }`;
     grid.appendChild(div);
   }
 }
+
 
 function openTerritory() {
   document.getElementById("homepage").style.display = "none";
