@@ -128,21 +128,19 @@ function loadPlayerStatic(callback) {
 }
 
 function login() {
-  let userId;
-  let playerName = "Người chơi ẩn danh"; // REMARK: tên mặc định
-
-  if (typeof Telegram !== "undefined" && Telegram.WebApp?.initDataUnsafe?.user?.id) {
-    Telegram.WebApp.ready(); // REMARK: Gọi ready khi có WebApp
-    userId = Telegram.WebApp.initDataUnsafe.user.id;
-    const user = Telegram.WebApp.initDataUnsafe.user;
-    playerName = `${user.first_name || ""} ${user.last_name || ""}`.trim();
-  } else {
-    userId = "web_" + Math.floor(Math.random() * 1000000);
+  if (typeof Telegram === "undefined" || !Telegram.WebApp?.initDataUnsafe?.user?.id) {
+    document.getElementById("loading").innerText = "Vui lòng mở game từ Telegram!";
+    return;
   }
+
+  Telegram.WebApp.ready();
+  const user = Telegram.WebApp.initDataUnsafe.user;
+  const userId = user.id.toString();
+  const playerName = `${user.first_name || ""} ${user.last_name || ""}`.trim();
 
   PlayFabClientSDK.LoginWithCustomID({
     TitleId: PlayFab.settings.titleId,
-    CustomId: userId.toString(),
+    CustomId: userId,
     CreateAccount: true
   }, function () {
     loadPlayerStatic((userData, virtualCurrency) => {
@@ -152,8 +150,8 @@ function login() {
         Iron: userData.Iron?.Value,
         Stone: userData.Stone?.Value
       });
-
-      document.getElementById("player-name").innerText = playerName; // REMARK: hiển thị tên
+      cachedTerritories = JSON.parse(userData.Territories?.Value || "[]");
+      document.getElementById("player-name").innerText = playerName;
       document.getElementById("loading").style.display = "none";
       document.getElementById("homepage").style.display = "block";
     });
@@ -161,6 +159,7 @@ function login() {
     document.getElementById("loading").innerText = "Lỗi đăng nhập!";
   });
 }
+
 
 function harvest() {
   const btn = document.getElementById("harvestBtn"); // REMARK: disable nút khi bấm
