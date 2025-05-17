@@ -1,4 +1,5 @@
-<!DOCTYPE html><html lang="vi">
+<!DOCTYPE html>
+<html lang="vi">
 <head>
   <meta charset="UTF-8">
   <title>Game Trắc Nghiệm</title>
@@ -21,72 +22,43 @@
     <input id="playerCode" placeholder="Mã code 3 số" maxlength="3">
     <button onclick="login()">Bắt đầu</button>
     <button onclick="getLeaderboard()">Xem Bảng Xếp Hạng</button>
-  </div>  <div id="loading">Đang tải câu hỏi...</div>  <div id="quiz">
+  </div>
+
+  <div id="loading">Đang tải câu hỏi...</div>
+
+  <div id="quiz">
     <div id="questionText"></div>
     <div id="answerList"></div>
     <div>Thời gian: <span id="timer">0</span> giây</div>
     <button id="nextButton" onclick="nextQuestion()">Next</button>
-  </div>  <div id="leaderboard">
+  </div>
+
+  <div id="leaderboard">
     <h3>Bảng Xếp Hạng TOP 10</h3>
     <table>
       <thead><tr><th>Hạng</th><th>Tên</th><th>Điểm</th></tr></thead>
       <tbody id="leaderboardBody"></tbody>
     </table>
     <button onclick="backHome()">Đóng</button>
-  </div>  <script>
+  </div>
+
+  <script>
+    const PlayFab = window.PlayFab;
+    const PlayFabClientSDK = PlayFab.ClientApi;
     PlayFab.settings.titleId = "13875";
-    let quizData = JSON.parse(`[
-  {
-    "question": "5 + 3 = ?",
-    "answers": ["6", "7", "8", "9"],
-    "correct": 2
-  },
-  {
-    "question": "9 - 4 = ?",
-    "answers": ["4", "5", "6", "7"],
-    "correct": 1
-  },
-  {
-    "question": "7 x 2 = ?",
-    "answers": ["14", "12", "16", "10"],
-    "correct": 0
-  },
-  {
-    "question": "18 ÷ 3 = ?",
-    "answers": ["5", "6", "7", "8"],
-    "correct": 1
-  },
-  {
-    "question": "10 + 15 = ?",
-    "answers": ["25", "24", "23", "22"],
-    "correct": 0
-  },
-  {
-    "question": "8 x 5 = ?",
-    "answers": ["30", "40", "35", "45"],
-    "correct": 1
-  },
-  {
-    "question": "100 - 55 = ?",
-    "answers": ["35", "45", "55", "50"],
-    "correct": 1
-  },
-  {
-    "question": "6 x 6 = ?",
-    "answers": ["36", "30", "42", "32"],
-    "correct": 0
-  },
-  {
-    "question": "81 ÷ 9 = ?",
-    "answers": ["9", "8", "7", "6"],
-    "correct": 0
-  },
-  {
-    "question": "4 + 6 x 2 = ?",
-    "answers": ["20", "14", "16", "12"],
-    "correct": 1
-  }
-]`);
+
+    let quizData = [
+      { question: "5 + 3 = ?", answers: ["6", "7", "8", "9"], correct: 2 },
+      { question: "9 - 4 = ?", answers: ["4", "5", "6", "7"], correct: 1 },
+      { question: "7 x 2 = ?", answers: ["14", "12", "16", "10"], correct: 0 },
+      { question: "18 ÷ 3 = ?", answers: ["5", "6", "7", "8"], correct: 1 },
+      { question: "10 + 15 = ?", answers: ["25", "24", "23", "22"], correct: 0 },
+      { question: "8 x 5 = ?", answers: ["30", "40", "35", "45"], correct: 1 },
+      { question: "100 - 55 = ?", answers: ["35", "45", "55", "50"], correct: 1 },
+      { question: "6 x 6 = ?", answers: ["36", "30", "42", "32"], correct: 0 },
+      { question: "81 ÷ 9 = ?", answers: ["9", "8", "7", "6"], correct: 0 },
+      { question: "4 + 6 x 2 = ?", answers: ["20", "14", "16", "12"], correct: 1 }
+    ];
 
     let currentIndex = 0;
     let totalScore = 0;
@@ -104,14 +76,15 @@
         CustomId: customId,
         CreateAccount: true
       }, function () {
-        PlayFabClientSDK.UpdateUserTitleDisplayName({ DisplayName: name });
-        document.getElementById("home").style.display = "none";
-        document.getElementById("loading").style.display = "none";
-        document.getElementById("quiz").style.display = "block";
-        shuffleArray(quizData);
-        currentIndex = 0;
-        totalScore = 0;
-        showQuestion();
+        PlayFabClientSDK.UpdateUserTitleDisplayName({ DisplayName: name }, function () {
+          document.getElementById("home").style.display = "none";
+          document.getElementById("loading").style.display = "none";
+          document.getElementById("quiz").style.display = "block";
+          shuffleArray(quizData);
+          currentIndex = 0;
+          totalScore = 0;
+          showQuestion();
+        });
       }, function () {
         alert("Lỗi đăng nhập");
       });
@@ -125,44 +98,42 @@
     }
 
     function showQuestion() {
-  const q = quizData[currentIndex];
-  document.getElementById("questionText").innerText = `Câu ${currentIndex + 1}: ${q.question}`;
-  const answerList = document.getElementById("answerList");
-  answerList.innerHTML = "";
+      const q = quizData[currentIndex];
+      document.getElementById("questionText").innerText = `Câu ${currentIndex + 1}: ${q.question}`;
+      const answerList = document.getElementById("answerList");
+      answerList.innerHTML = "";
 
-  startTime = Date.now();
-  document.getElementById("timer").innerText = "0";
-  clearInterval(timerInterval);
-  timerInterval = setInterval(() => {
-    const elapsed = Math.floor((Date.now() - startTime) / 1000);
-    document.getElementById("timer").innerText = elapsed;
-  }, 200);
-
-  const answers = q.answers;
-  let selected = false;
-
-  answers.forEach((ans, idx) => {
-    const btn = document.createElement("button");
-    btn.className = "answer";
-    btn.innerText = ans;
-    btn.onclick = () => {
-      if (selected) return;
-      selected = true;
+      startTime = Date.now();
+      document.getElementById("timer").innerText = "0";
       clearInterval(timerInterval);
-      const elapsed = (Date.now() - startTime) / 1000;
-      let bonus = 0;
-      if (elapsed <= 5) bonus = 50;
-      else if (elapsed <= 10) bonus = 40;
-      else if (elapsed <= 20) bonus = 20;
-      else if (elapsed <= 30) bonus = 10;
-      const base = (idx === q.correct) ? 50 : 0;
-      totalScore += base + (idx === q.correct ? bonus : 0);
-    };
-    answerList.appendChild(btn);
-  });
+      timerInterval = setInterval(() => {
+        const elapsed = Math.floor((Date.now() - startTime) / 1000);
+        document.getElementById("timer").innerText = elapsed;
+      }, 200);
 
-  document.getElementById("nextButton").innerText = currentIndex < quizData.length - 1 ? "Next" : "Kết thúc";
-}
+      let selected = false;
+      q.answers.forEach((ans, idx) => {
+        const btn = document.createElement("button");
+        btn.className = "answer";
+        btn.innerText = ans;
+        btn.onclick = () => {
+          if (selected) return;
+          selected = true;
+          clearInterval(timerInterval);
+          const elapsed = (Date.now() - startTime) / 1000;
+          let bonus = 0;
+          if (elapsed <= 5) bonus = 50;
+          else if (elapsed <= 10) bonus = 40;
+          else if (elapsed <= 20) bonus = 20;
+          else if (elapsed <= 30) bonus = 10;
+          const base = (idx === q.correct) ? 50 : 0;
+          totalScore += base + (idx === q.correct ? bonus : 0);
+        };
+        answerList.appendChild(btn);
+      });
+
+      document.getElementById("nextButton").innerText =
+        currentIndex < quizData.length - 1 ? "Next" : "Kết thúc";
     }
 
     function nextQuestion() {
@@ -207,5 +178,6 @@
       document.getElementById("leaderboard").style.display = "none";
       document.getElementById("home").style.display = "block";
     }
-  </script></body>
+  </script>
+</body>
 </html>
