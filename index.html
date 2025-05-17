@@ -125,40 +125,44 @@
     }
 
     function showQuestion() {
-      const q = quizData[currentIndex];
-      document.getElementById("questionText").innerText = `Câu ${currentIndex + 1}: ${q.question}`;
-      const answerList = document.getElementById("answerList");
-      answerList.innerHTML = "";
+  const q = quizData[currentIndex];
+  document.getElementById("questionText").innerText = `Câu ${currentIndex + 1}: ${q.question}`;
+  const answerList = document.getElementById("answerList");
+  answerList.innerHTML = "";
 
-      startTime = Date.now();
-      document.getElementById("timer").innerText = "0";
+  startTime = Date.now();
+  document.getElementById("timer").innerText = "0";
+  clearInterval(timerInterval);
+  timerInterval = setInterval(() => {
+    const elapsed = Math.floor((Date.now() - startTime) / 1000);
+    document.getElementById("timer").innerText = elapsed;
+  }, 200);
+
+  const answers = q.answers;
+  let selected = false;
+
+  answers.forEach((ans, idx) => {
+    const btn = document.createElement("button");
+    btn.className = "answer";
+    btn.innerText = ans;
+    btn.onclick = () => {
+      if (selected) return;
+      selected = true;
       clearInterval(timerInterval);
-      timerInterval = setInterval(() => {
-        const elapsed = Math.floor((Date.now() - startTime) / 1000);
-        document.getElementById("timer").innerText = elapsed;
-      }, 200);
+      const elapsed = (Date.now() - startTime) / 1000;
+      let bonus = 0;
+      if (elapsed <= 5) bonus = 50;
+      else if (elapsed <= 10) bonus = 40;
+      else if (elapsed <= 20) bonus = 20;
+      else if (elapsed <= 30) bonus = 10;
+      const base = (idx === q.correct) ? 50 : 0;
+      totalScore += base + (idx === q.correct ? bonus : 0);
+    };
+    answerList.appendChild(btn);
+  });
 
-      const answers = [q.answer1, q.answer2, q.answer3, q.answer4];
-      answers.forEach((ans, idx) => {
-        const btn = document.createElement("button");
-        btn.className = "answer";
-        btn.innerText = ans;
-        btn.onclick = () => {
-          clearInterval(timerInterval);
-          const elapsed = (Date.now() - startTime) / 1000;
-          let bonus = 0;
-          if (elapsed <= 5) bonus = 50;
-          else if (elapsed <= 10) bonus = 40;
-          else if (elapsed <= 20) bonus = 20;
-          else if (elapsed <= 30) bonus = 10;
-          const base = (idx === q.correct) ? 50 : 0;
-          totalScore += base + (idx === q.correct ? bonus : 0);
-          btn.style.backgroundColor = idx === q.correct ? "lightgreen" : "salmon";
-        };
-        answerList.appendChild(btn);
-      });
-
-      document.getElementById("nextButton").innerText = currentIndex < quizData.length - 1 ? "Next" : "Kết thúc";
+  document.getElementById("nextButton").innerText = currentIndex < quizData.length - 1 ? "Next" : "Kết thúc";
+}
     }
 
     function nextQuestion() {
