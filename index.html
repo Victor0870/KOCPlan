@@ -77,34 +77,22 @@
       }
     }
 
-   function loadQuiz() {
-  PlayFabClientSDK.GetTitleData({ Keys: ["quiz"] }, function (result) {
-    if (!result.Data || !result.Data.quiz) {
-      alert("Không tìm thấy dữ liệu câu hỏi trong TitleData.");
-      console.error("Data trả về:", result.Data);
-      return;
+    function loadQuiz() {
+      PlayFabClientSDK.GetTitleData({ Keys: ["quiz"] }, function (result) {
+        try {
+          quizData = JSON.parse(result.Data.quiz);
+        } catch (e) {
+          alert("Lỗi dữ liệu quiz");
+          return;
+        }
+        shuffleArray(quizData);
+        currentIndex = 0;
+        totalScore = 0;
+        document.getElementById("loading").style.display = "none";
+        document.getElementById("quiz").style.display = "block";
+        showQuestion();
+      });
     }
-
-    try {
-      quizData = JSON.parse(result.Data.quiz);
-    } catch (e) {
-      alert("Lỗi JSON không hợp lệ trong TitleData.");
-      console.error("Lỗi phân tích JSON:", e);
-      return;
-    }
-
-    shuffleArray(quizData);
-    currentIndex = 0;
-    totalScore = 0;
-    document.getElementById("loading").style.display = "none";
-    document.getElementById("quiz").style.display = "block";
-    showQuestion();
-  }, function (error) {
-    alert("Lỗi khi tải câu hỏi từ PlayFab.");
-    console.error("Lỗi API:", error);
-  });
-}
-
 
     function showQuestion() {
       const q = quizData[currentIndex];
@@ -120,7 +108,8 @@
         document.getElementById("timer").innerText = elapsed;
       }, 200);
 
-      q.answers.forEach((ans, idx) => {
+      const answers = [q.answer1, q.answer2, q.answer3, q.answer4];
+      answers.forEach((ans, idx) => {
         const btn = document.createElement("button");
         btn.className = "answer";
         btn.innerText = ans;
