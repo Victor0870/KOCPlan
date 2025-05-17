@@ -1,5 +1,4 @@
-<!DOCTYPE html>
-<html lang="vi">
+<!DOCTYPE html><html lang="vi">
 <head>
   <meta charset="UTF-8">
   <title>Game Trắc Nghiệm</title>
@@ -22,29 +21,73 @@
     <input id="playerCode" placeholder="Mã code 3 số" maxlength="3">
     <button onclick="login()">Bắt đầu</button>
     <button onclick="getLeaderboard()">Xem Bảng Xếp Hạng</button>
-  </div>
-
-  <div id="loading">Đang tải câu hỏi...</div>
-
-  <div id="quiz">
+  </div>  <div id="loading">Đang tải câu hỏi...</div>  <div id="quiz">
     <div id="questionText"></div>
     <div id="answerList"></div>
     <div>Thời gian: <span id="timer">0</span> giây</div>
     <button id="nextButton" onclick="nextQuestion()">Next</button>
-  </div>
-
-  <div id="leaderboard">
+  </div>  <div id="leaderboard">
     <h3>Bảng Xếp Hạng TOP 10</h3>
     <table>
       <thead><tr><th>Hạng</th><th>Tên</th><th>Điểm</th></tr></thead>
       <tbody id="leaderboardBody"></tbody>
     </table>
     <button onclick="backHome()">Đóng</button>
-  </div>
-
-  <script>
+  </div>  <script>
     PlayFab.settings.titleId = "13875";
-    let quizData = [];
+    let quizData = JSON.parse(`[
+  {
+    "question": "5 + 3 = ?",
+    "answers": ["6", "7", "8", "9"],
+    "correct": 2
+  },
+  {
+    "question": "9 - 4 = ?",
+    "answers": ["4", "5", "6", "7"],
+    "correct": 1
+  },
+  {
+    "question": "7 x 2 = ?",
+    "answers": ["14", "12", "16", "10"],
+    "correct": 0
+  },
+  {
+    "question": "18 ÷ 3 = ?",
+    "answers": ["5", "6", "7", "8"],
+    "correct": 1
+  },
+  {
+    "question": "10 + 15 = ?",
+    "answers": ["25", "24", "23", "22"],
+    "correct": 0
+  },
+  {
+    "question": "8 x 5 = ?",
+    "answers": ["30", "40", "35", "45"],
+    "correct": 1
+  },
+  {
+    "question": "100 - 55 = ?",
+    "answers": ["35", "45", "55", "50"],
+    "correct": 1
+  },
+  {
+    "question": "6 x 6 = ?",
+    "answers": ["36", "30", "42", "32"],
+    "correct": 0
+  },
+  {
+    "question": "81 ÷ 9 = ?",
+    "answers": ["9", "8", "7", "6"],
+    "correct": 0
+  },
+  {
+    "question": "4 + 6 x 2 = ?",
+    "answers": ["20", "14", "16", "12"],
+    "correct": 1
+  }
+]`);
+
     let currentIndex = 0;
     let totalScore = 0;
     let timerInterval, startTime;
@@ -63,9 +106,13 @@
       }, function () {
         PlayFabClientSDK.UpdateUserTitleDisplayName({ DisplayName: name });
         document.getElementById("home").style.display = "none";
-        document.getElementById("loading").style.display = "block";
-        loadQuiz();
-      }, function (err) {
+        document.getElementById("loading").style.display = "none";
+        document.getElementById("quiz").style.display = "block";
+        shuffleArray(quizData);
+        currentIndex = 0;
+        totalScore = 0;
+        showQuestion();
+      }, function () {
         alert("Lỗi đăng nhập");
       });
     }
@@ -75,23 +122,6 @@
         const j = Math.floor(Math.random() * (i + 1));
         [array[i], array[j]] = [array[j], array[i]];
       }
-    }
-
-    function loadQuiz() {
-      PlayFabClientSDK.GetTitleData({ Keys: ["quiz"] }, function (result) {
-        try {
-          quizData = JSON.parse(result.Data.quiz);
-        } catch (e) {
-          alert("Lỗi dữ liệu quiz");
-          return;
-        }
-        shuffleArray(quizData);
-        currentIndex = 0;
-        totalScore = 0;
-        document.getElementById("loading").style.display = "none";
-        document.getElementById("quiz").style.display = "block";
-        showQuestion();
-      });
     }
 
     function showQuestion() {
@@ -173,6 +203,5 @@
       document.getElementById("leaderboard").style.display = "none";
       document.getElementById("home").style.display = "block";
     }
-  </script>
-</body>
+  </script></body>
 </html>
