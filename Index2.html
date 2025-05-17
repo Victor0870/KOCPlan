@@ -1,108 +1,186 @@
 <!DOCTYPE html>
-<html lang="vi">
+<html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Game Trắc Nghiệm</title>
-  <script src="https://download.playfab.com/PlayFabClientApi.js"></script>
+  <meta charset="UTF-8" />
+  <title>Kingdom of Chaos</title>
   <style>
-    body { font-family: sans-serif; padding: 20px; background: #f0f0f0; max-width: 600px; margin: auto; }
-    #quiz, #loading { display: none; }
-    .answer { display: block; margin: 10px 0; padding: 10px; background: #fff; border: 1px solid #ccc; border-radius: 6px; }
-    .answer:hover { background: #e0e0e0; }
-    input, button { padding: 10px; margin-top: 10px; width: 100%; box-sizing: border-box; }
-    button { background: #007bff; color: white; border: none; border-radius: 5px; }
+    body {
+      background: #f0f0f0;
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      overflow-x: hidden;
+    }
+    #loading {
+      width: 100%;
+      height: 100vh;
+      background: #000;
+      color: #fff;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 24px;
+    }
+    #homepage {
+      padding: 20px;
+      text-align: center;
+      display: none;
+    }
+    .resource-bar {
+      background: #fff;
+      padding: 10px;
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      flex-wrap: wrap;
+    }
+    .resource-item {
+      font-size: 16px;
+      font-weight: bold;
+    }
+    #player-name {
+      font-size: 14px;
+      margin-top: 5px;
+      font-style: italic;
+      color: #555;
+      width: 100%;
+    }
+    button {
+      margin-top: 20px;
+      padding: 10px 20px;
+      font-size: 16px;
+    }
   </style>
 </head>
 <body>
-  <div id="home">
-    <h2>Game Trắc Nghiệm</h2>
-    <input id="playerName" placeholder="Tên người chơi">
-    <input id="playerCode" placeholder="Mã code 3 số" maxlength="3">
-    <button onclick="login()">Bắt đầu</button>
+
+<div id="loading">Loading game...</div>
+
+<div id="homepage">
+  <div class="resource-bar">
+    <div class="resource-item">Food: <span id="food">0</span></div>
+    <div class="resource-item">Wood: <span id="wood">0</span></div>
+    <div class="resource-item">Iron: <span id="iron">0</span></div>
+    <div class="resource-item">Stone: <span id="stone">0</span></div>
+    <div id="player-name"></div> <!-- REMARK: Thêm dòng hiển thị tên người chơi -->
   </div>
-
-  <div id="loading">Đang tải câu hỏi...</div>
-
-  <div id="quiz">
-    <div id="questionText"></div>
-    <div id="answerList"></div>
-    <button id="nextButton" onclick="nextQuestion()">Next</button>
+  <button id="harvestBtn" onclick="harvest()">Thu Hoạch</button> <!-- REMARK: Gán id để disable -->
+  <button id="manageBtn" onclick="openTerritory()">Quản Lý Xây Dựng</button>
+</div>
+<div id="territory-page" style="display:none; padding: 20px; text-align: center;">
+  <div class="resource-bar">
+    <div class="resource-item">Food: <span id="food2">0</span></div>
+    <div class="resource-item">Wood: <span id="wood2">0</span></div>
+    <div class="resource-item">Iron: <span id="iron2">0</span></div>
+    <div class="resource-item">Stone: <span id="stone2">0</span></div>
   </div>
+  <h3>Quản Lý Lãnh Thổ</h3>
+  <div id="territory-grid" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 20px;"></div>
+  <button onclick="goHome()">Quay Lại</button>
+</div>
+<!-- REMARK: Thêm SDK PlayFab -->
+<script src="https://download.playfab.com/PlayFabClientApi.js"></script>
+<script>
+PlayFab.settings.titleId = "188E8A";
 
-  <script>
-    PlayFab.settings.titleId = "13875";
+function updateStorageUI(data) {
+  document.getElementById("food").innerText = data.Food || 0;
+  document.getElementById("wood").innerText = data.Wood || 0;
+  document.getElementById("iron").innerText = data.Iron || 0;
+  document.getElementById("stone").innerText = data.Stone || 0;
+}
 
-    let quizData = [];
-    let currentIndex = 0;
+function callCreateStatic(callback) {
+  PlayFabClientSDK.ExecuteCloudScript({
+    FunctionName: "createInitialStatic"
+  }, function () {
+    setTimeout(() => callback(), 500);
+  }, function () {
+    document.getElementById("loading").innerText = "Lỗi tạo dữ liệu!";
+  });
+}
 
-    function login() {
-      const name = document.getElementById("playerName").value.trim();
-      const code = document.getElementById("playerCode").value.trim();
-      if (name === "" || code.length !== 3 || isNaN(code)) {
-        alert("Nhập tên và mã 3 số!");
-        return;
-      }
+function loadPlayerStatic(callback) {
+  PlayFabClientSDK.GetUserData({}, function (result) {
+    const data = result.data?.Data || {};
+    const hasStatic = ["CastleLevel", "MaxTerritorySlot", "Territories"].every(k => k in data);
 
-      const customId = `${name}_${code}`;
-      PlayFabClientSDK.LoginWithCustomID({
-        CustomId: customId,
-        CreateAccount: true
-      }, function () {
-        document.getElementById("home").style.display = "none";
-        document.getElementById("loading").style.display = "block";
-        loadQuiz();
-      }, function (err) {
-        alert("Lỗi đăng nhập PlayFab");
-        console.error(err);
-      });
+    if (!hasStatic) {
+      callCreateStatic(() => loadPlayerStatic(callback));
+      return;
     }
 
-    function loadQuiz() {
-      PlayFabClientSDK.GetTitleData({ Keys: ["quiz"] }, function (result) {
-        if (!result.Data.quiz) {
-          alert("Không có dữ liệu quiz trong TitleData!");
-          return;
+    PlayFabClientSDK.GetUserInventory({}, function (inv) {
+      const vc = inv.data?.VirtualCurrency || {};
+      callback(data, vc);
+    }, function () {
+      document.getElementById("loading").innerText = "Lỗi tải Inventory!";
+    });
+
+  }, function () {
+    document.getElementById("loading").innerText = "Lỗi load dữ liệu!";
+  });
+}
+
+function login() {
+  if (typeof Telegram === "undefined" || !Telegram.WebApp) {
+    document.getElementById("loading").innerText = "Không tìm thấy Telegram WebApp!";
+    return;
+  }
+
+  Telegram.WebApp.ready();
+
+  setTimeout(() => {
+    const user = Telegram.WebApp.initDataUnsafe?.user;
+
+    if (!user?.id) {
+      document.getElementById("loading").innerText = "Không có thông tin người dùng Telegram!";
+      return;
+    }
+
+    const userId = user.id.toString();
+    const fullName = `${user.first_name || ""} ${user.last_name || ""}`.trim();
+    document.getElementById("player-name").innerText = `Người chơi: ${fullName}`;
+
+    PlayFabClientSDK.LoginWithCustomID({
+      TitleId: PlayFab.settings.titleId,
+      CustomId: userId,
+      CreateAccount: true
+    }, function () {
+      loadPlayerStatic((userData, virtualCurrency) => {
+        updateStorageUI({
+          Food: userData.Food?.Value,
+          Wood: userData.Wood?.Value,
+          Iron: userData.Iron?.Value,
+          Stone: userData.Stone?.Value
+        });
+
+        try {
+          cachedTerritories = JSON.parse(userData.Territories?.Value || "[]");
+        } catch (e) {
+          console.error("Lỗi parse Territory:", e);
+          cachedTerritories = [];
         }
-        quizData = JSON.parse(result.Data.quiz);
-        currentIndex = 0;
+
         document.getElementById("loading").style.display = "none";
-        document.getElementById("quiz").style.display = "block";
-        showQuestion();
-      }, function (error) {
-        alert("Không thể tải câu hỏi");
-        console.error(error);
+        document.getElementById("homepage").style.display = "block";
       });
-    }
+    }, function (err) {
+      console.error("Lỗi đăng nhập:", err);
+      document.getElementById("loading").innerText = "Lỗi đăng nhập: " + (err?.errorMessage || "Không rõ nguyên nhân");
+    });
+  }, 100);
+}
 
-    function showQuestion() {
-      const questionObj = quizData[currentIndex];
-      document.getElementById("questionText").innerText = "Câu " + (currentIndex + 1) + ": " + questionObj.question;
+window.addEventListener("DOMContentLoaded", () => {
+  login();
+});
 
-      const answerList = document.getElementById("answerList");
-      answerList.innerHTML = "";
-      questionObj.answers.forEach((ans, idx) => {
-        const btn = document.createElement("button");
-        btn.className = "answer";
-        btn.innerText = ans;
-        btn.onclick = () => {
-          btn.style.backgroundColor = idx === questionObj.correct ? "lightgreen" : "salmon";
-        };
-        answerList.appendChild(btn);
-      });
+</script>
 
-      document.getElementById("nextButton").innerText = currentIndex < quizData.length - 1 ? "Next" : "Kết thúc";
-    }
-
-    function nextQuestion() {
-      currentIndex++;
-      if (currentIndex < quizData.length) {
-        showQuestion();
-      } else {
-        alert("Bạn đã hoàn thành bài trắc nghiệm!");
-        document.getElementById("quiz").style.display = "none";
-        document.getElementById("home").style.display = "block";
-      }
-    }
-  </script>
 </body>
 </html>
