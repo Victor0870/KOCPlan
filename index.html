@@ -77,17 +77,34 @@
       }
     }
 
-    function loadQuiz() {
-      PlayFabClientSDK.GetTitleData({ Keys: ["quiz"] }, function (result) {
-        quizData = JSON.parse(result.Data.quiz);
-        shuffleArray(quizData);
-        currentIndex = 0;
-        totalScore = 0;
-        document.getElementById("loading").style.display = "none";
-        document.getElementById("quiz").style.display = "block";
-        showQuestion();
-      });
+   function loadQuiz() {
+  PlayFabClientSDK.GetTitleData({ Keys: ["quiz"] }, function (result) {
+    if (!result.Data || !result.Data.quiz) {
+      alert("Không tìm thấy dữ liệu câu hỏi trong TitleData.");
+      console.error("Data trả về:", result.Data);
+      return;
     }
+
+    try {
+      quizData = JSON.parse(result.Data.quiz);
+    } catch (e) {
+      alert("Lỗi JSON không hợp lệ trong TitleData.");
+      console.error("Lỗi phân tích JSON:", e);
+      return;
+    }
+
+    shuffleArray(quizData);
+    currentIndex = 0;
+    totalScore = 0;
+    document.getElementById("loading").style.display = "none";
+    document.getElementById("quiz").style.display = "block";
+    showQuestion();
+  }, function (error) {
+    alert("Lỗi khi tải câu hỏi từ PlayFab.");
+    console.error("Lỗi API:", error);
+  });
+}
+
 
     function showQuestion() {
       const q = quizData[currentIndex];
