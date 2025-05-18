@@ -142,7 +142,7 @@
   </div>
 
   <script>
-    PlayFab.settings.titleId = "13875"; // <----- CHỈNH SỬA TITLE ID CỦA BẠN
+    PlayFab.settings.titleId = "13875"; // <----- ĐÃ SỬA TITLE ID
     let quizData = JSON.parse(`[
       { "question": "6 x 6 = ?", "answers": ["30", "36", "42", "48"], "correct": 1 },
       { "question": "9 - 4 = ?", "answers": ["4", "5", "6", "7"], "correct": 1 },
@@ -244,19 +244,21 @@
       }
 
       const endTime = Date.now();
-      const timeTaken = (endTime - startTime) / 1000;
+      const timeTakenMs = endTime - startTime; // Thời gian trả lời bằng milliseconds
       userAnswers.push(selectedAnswer);
 
       const currentQuestion = quizData[currentIndex];
-      let questionScore = 0;
+      let questionScore = 50; // Điểm cơ bản
+      let bonusPoints = 0;
+
       if (selectedAnswer === currentQuestion.correct) {
-        questionScore = 50;
-        if (timeTaken <= 5) questionScore += 50;
-        else if (timeTaken <= 10) questionScore += 40;
-        else if (timeTaken <= 20) questionScore += 20;
-        else if (timeTaken <= 30) questionScore += 10;
+        if (timeTakenMs <= 20000) {
+          const timeRatio = timeTakenMs / 20000;
+          bonusPoints = Math.max(0, Math.floor(50 * (1 - timeRatio)));
+        }
       }
-      totalScore += questionScore;
+
+      totalScore += questionScore + bonusPoints;
 
       currentIndex++;
       selectedAnswer = null;
