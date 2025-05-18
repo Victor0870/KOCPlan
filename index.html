@@ -21,16 +21,21 @@
       display: block;
     }
 
+    #loggedInInfo {
+      display: none;
+      margin-bottom: 10px;
+    }
+
     .answer-button {
       display: block;
       margin: 10px 0;
       padding: 10px;
-      background: #fff; /* Đảm bảo có màu nền khác màu chữ */
+      background: #fff;
       border: 1px solid #ccc;
       border-radius: 6px;
       cursor: pointer;
       transition: background-color 0.3s ease;
-      color: #000; /* Đảm bảo có màu chữ khác màu nền */
+      color: #000;
     }
 
     .answer-button:hover {
@@ -64,7 +69,7 @@
     }
 
     #nextButton {
-      display: none; /* Ẩn nút Next ban đầu */
+      display: none;
     }
 
     table {
@@ -79,18 +84,12 @@
       text-align: center;
     }
 
-    /* Media queries cho các kích thước màn hình khác nhau */
+    /* Media queries */
     @media (max-width: 480px) {
       body {
         padding: 10px;
       }
-
-      input, button {
-        padding: 8px;
-        font-size: 0.9em;
-      }
-
-      .answer-button {
+      input, button, .answer-button {
         padding: 8px;
         font-size: 0.9em;
       }
@@ -100,12 +99,7 @@
       body {
         padding: 15px;
       }
-
-      input, button {
-        padding: 9px;
-      }
-
-      .answer-button {
+      input, button, .answer-button {
         padding: 9px;
       }
     }
@@ -114,6 +108,9 @@
 <body>
   <div id="home">
     <h2>Game Trắc Nghiệm</h2>
+    <div id="loggedInInfo">
+      Chào <span id="displayName"></span>!
+    </div>
     <input id="playerName" placeholder="Tên người chơi">
     <input id="playerCode" placeholder="Mã code 3 số" maxlength="3">
     <button onclick="login()">Bắt đầu</button>
@@ -145,66 +142,26 @@
   </div>
 
   <script>
-    PlayFab.settings.titleId = "13875";
+    PlayFab.settings.titleId = "13875"; // <----- CHỈNH SỬA TITLE ID CỦA BẠN
     let quizData = JSON.parse(`[
-  {
-    "question": "6 x 6 = ?",
-    "answers": ["30", "36", "42", "48"],
-    "correct": 1
-  },
-  {
-    "question": "9 - 4 = ?",
-    "answers": ["4", "5", "6", "7"],
-    "correct": 1
-  },
-  {
-    "question": "7 x 2 = ?",
-    "answers": ["14", "12", "16", "10"],
-    "correct": 0
-  },
-  {
-    "question": "18 ÷ 3 = ?",
-    "answers": ["5", "6", "7", "8"],
-    "correct": 1
-  },
-  {
-    "question": "10 + 15 = ?",
-    "answers": ["25", "24", "23", "22"],
-    "correct": 0
-  },
-  {
-    "question": "8 x 5 = ?",
-    "answers": ["30", "40", "35", "45"],
-    "correct": 1
-  },
-  {
-    "question": "100 - 55 = ?",
-    "answers": ["35", "45", "55", "50"],
-    "correct": 1
-  },
-  {
-    "question": "6 x 6 = ?",
-    "answers": ["36", "30", "42", "32"],
-    "correct": 0
-  },
-  {
-    "question": "81 ÷ 9 = ?",
-    "answers": ["9", "8", "7", "6"],
-    "correct": 0
-  },
-  {
-    "question": "4 + 6 x 2 = ?",
-    "answers": ["20", "14", "16", "12"],
-    "correct": 1
-  }
-]`);
+      { "question": "6 x 6 = ?", "answers": ["30", "36", "42", "48"], "correct": 1 },
+      { "question": "9 - 4 = ?", "answers": ["4", "5", "6", "7"], "correct": 1 },
+      { "question": "7 x 2 = ?", "answers": ["14", "12", "16", "10"], "correct": 0 },
+      { "question": "18 ÷ 3 = ?", "answers": ["5", "6", "7", "8"], "correct": 1 },
+      { "question": "10 + 15 = ?", "answers": ["25", "24", "23", "22"], "correct": 0 },
+      { "question": "8 x 5 = ?", "answers": ["30", "40", "35", "45"], "correct": 1 },
+      { "question": "100 - 55 = ?", "answers": ["35", "45", "55", "50"], "correct": 1 },
+      { "question": "6 x 6 = ?", "answers": ["36", "30", "42", "32"], "correct": 0 },
+      { "question": "81 ÷ 9 = ?", "answers": ["9", "8", "7", "6"], "correct": 0 },
+      { "question": "4 + 6 x 2 = ?", "answers": ["20", "14", "16", "12"], "correct": 1 }
+    ]`);
 
     let currentIndex = 0;
     let totalScore = 0;
     let timerInterval, startTime;
     let selectedAnswer = null;
-    let userAnswers = []; // Mảng lưu trữ đáp án của người dùng
-    let answerButtons = []; // Mảng lưu trữ các nút đáp án
+    let userAnswers = [];
+    let answerButtons = [];
 
     function login() {
       const name = document.getElementById("playerName").value.trim();
@@ -222,11 +179,13 @@
       }, function (result) {
         PlayFabClientSDK.UpdateUserTitleDisplayName({ DisplayName: name });
         document.getElementById("loading").style.display = "none";
+        document.getElementById("loggedInInfo").style.display = "block";
+        document.getElementById("displayName").innerText = name;
         document.getElementById("quiz").style.display = "block";
         shuffleArray(quizData);
         currentIndex = 0;
         totalScore = 0;
-        userAnswers = []; // Reset mảng đáp án
+        userAnswers = [];
         showQuestion();
       }, function (error) {
         document.getElementById("loading").style.display = "none";
@@ -250,7 +209,7 @@
       answerList.innerHTML = "";
       selectedAnswer = null;
       document.getElementById("nextButton").style.display = "none";
-      answerButtons = []; // Reset mảng nút đáp án
+      answerButtons = [];
 
       startTime = Date.now();
       document.getElementById("timer").innerText = "0";
@@ -268,7 +227,7 @@
           answerButtons.forEach(b => b.classList.remove("selected"));
           selectedAnswer = idx;
           btn.classList.add("selected");
-          document.getElementById("nextButton").style.display = "block"; // Hiển thị nút Next
+          document.getElementById("nextButton").style.display = "block";
         };
         answerList.appendChild(btn);
         answerButtons.push(btn);
@@ -278,7 +237,7 @@
     }
 
     function nextQuestion() {
-      clearInterval(timerInterval); // Dừng bộ đếm thời gian khi bấm Next
+      clearInterval(timerInterval);
       if (selectedAnswer === null) {
         alert("Vui lòng chọn một đáp án!");
         return;
@@ -307,7 +266,7 @@
         showQuestion();
       } else {
         document.getElementById("quiz").style.display = "none";
-        submitResult(totalScore); // Gửi tổng điểm cuối cùng
+        submitResult(totalScore);
       }
     }
 
@@ -332,7 +291,7 @@
       document.getElementById("home").style.display = "none";
       document.getElementById("loading").style.display = "block";
       PlayFabClientSDK.GetLeaderboard({
-        StatisticName: "QuizScore", // Đảm bảo tên này khớp với Statistic của bạn
+        StatisticName: "QuizScore", // <----- CHÍNH TẢ QUAN TRỌNG: QuizScore
         StartPosition: 0,
         MaxResultsCount: 10
       }, function (result) {
