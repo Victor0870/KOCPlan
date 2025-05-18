@@ -265,13 +265,13 @@
         btn.className = "answer-button";
         btn.innerText = ans;
         btn.onclick = () => {
-          // Loại bỏ class 'selected' khỏi nút đã chọn trước đó
           answerButtons.forEach(b => b.classList.remove("selected"));
           selectedAnswer = idx;
           btn.classList.add("selected");
+          document.getElementById("nextButton").style.display = "block"; // Hiển thị nút Next
         };
         answerList.appendChild(btn);
-        answerButtons.push(btn); // Thêm nút vào mảng
+        answerButtons.push(btn);
       });
 
       document.getElementById("nextButton").innerText = currentIndex < quizData.length - 1 ? "Tiếp tục" : "Kết thúc";
@@ -284,7 +284,20 @@
         return;
       }
 
-      userAnswers.push(selectedAnswer); // Lưu đáp án đã chọn
+      const endTime = Date.now();
+      const timeTaken = (endTime - startTime) / 1000;
+      userAnswers.push(selectedAnswer);
+
+      const currentQuestion = quizData[currentIndex];
+      let questionScore = 0;
+      if (selectedAnswer === currentQuestion.correct) {
+        questionScore = 50;
+        if (timeTaken <= 5) questionScore += 50;
+        else if (timeTaken <= 10) questionScore += 40;
+        else if (timeTaken <= 20) questionScore += 20;
+        else if (timeTaken <= 30) questionScore += 10;
+      }
+      totalScore += questionScore;
 
       currentIndex++;
       selectedAnswer = null;
@@ -294,24 +307,8 @@
         showQuestion();
       } else {
         document.getElementById("quiz").style.display = "none";
-        calculateAndSubmitResult();
+        submitResult(totalScore); // Gửi tổng điểm cuối cùng
       }
-    }
-
-    function calculateAndSubmitResult() {
-      clearInterval(timerInterval);
-      let finalScore = 0;
-      quizData.forEach((question, index) => {
-        const elapsed = userAnswers[index] ? (Date.now() - startTime) / 1000 : 0; // Thời gian không chính xác ở đây
-        let bonus = 0;
-        if (elapsed <= 5) bonus = 50;
-        else if (elapsed <= 10) bonus = 40;
-        else if (elapsed <= 20) bonus = 20;
-        else if (elapsed <= 30) bonus = 10;
-        const base = (userAnswers[index] === question.correct) ? 50 : 0;
-        finalScore += base + (userAnswers[index] === question.correct ? bonus : 0);
-      });
-      submitResult(finalScore);
     }
 
     function submitResult(score) {
@@ -321,9 +318,8 @@
         FunctionParameter: { correct: score }
       }, function (result) {
         document.getElementById("loading").style.display = "none";
-        // Loại bỏ thông báo điểm số cá nhân
         document.getElementById("home").style.display = "block";
-        alert("Đã hoàn thành bài trắc nghiệm! Điểm của bạn đã được gửi lên bảng xếp hạng.");
+        alert("Đã hoàn thành bài trắc nghiệm! Tổng điểm của bạn: " + score + ". Điểm đã được gửi lên bảng xếp hạng.");
       }, function (error) {
         document.getElementById("loading").style.display = "none";
         alert("Lỗi khi nộp điểm: " + error.errorMessage);
