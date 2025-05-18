@@ -25,11 +25,12 @@
       display: block;
       margin: 10px 0;
       padding: 10px;
-      background: #fff;
+      background: #fff; /* Đảm bảo có màu nền khác màu chữ */
       border: 1px solid #ccc;
       border-radius: 6px;
       cursor: pointer;
       transition: background-color 0.3s ease;
+      color: #000; /* Đảm bảo có màu chữ khác màu nền */
     }
 
     .answer-button:hover {
@@ -147,9 +148,9 @@
     PlayFab.settings.titleId = "13875";
     let quizData = JSON.parse(`[
   {
-    "question": "5 + 3 = ?",
-    "answers": ["6", "7", "8", "9"],
-    "correct": 2
+    "question": "6 x 6 = ?",
+    "answers": ["30", "36", "42", "48"],
+    "correct": 1
   },
   {
     "question": "9 - 4 = ?",
@@ -203,6 +204,7 @@
     let timerInterval, startTime;
     let selectedAnswer = null;
     let userAnswers = []; // Mảng lưu trữ đáp án của người dùng
+    let answerButtons = []; // Mảng lưu trữ các nút đáp án
 
     function login() {
       const name = document.getElementById("playerName").value.trim();
@@ -248,6 +250,7 @@
       answerList.innerHTML = "";
       selectedAnswer = null;
       document.getElementById("nextButton").style.display = "none";
+      answerButtons = []; // Reset mảng nút đáp án
 
       startTime = Date.now();
       document.getElementById("timer").innerText = "0";
@@ -262,25 +265,26 @@
         btn.className = "answer-button";
         btn.innerText = ans;
         btn.onclick = () => {
-          if (selectedAnswer !== null) return; // Ngăn chọn lại sau khi đã chọn
+          // Loại bỏ class 'selected' khỏi nút đã chọn trước đó
+          answerButtons.forEach(b => b.classList.remove("selected"));
           selectedAnswer = idx;
           btn.classList.add("selected");
-          clearInterval(timerInterval);
-          document.getElementById("nextButton").style.display = "block";
         };
         answerList.appendChild(btn);
+        answerButtons.push(btn); // Thêm nút vào mảng
       });
 
       document.getElementById("nextButton").innerText = currentIndex < quizData.length - 1 ? "Tiếp tục" : "Kết thúc";
     }
 
     function nextQuestion() {
+      clearInterval(timerInterval); // Dừng bộ đếm thời gian khi bấm Next
       if (selectedAnswer === null) {
         alert("Vui lòng chọn một đáp án!");
         return;
       }
 
-      userAnswers.push(selectedAnswer); // Lưu đáp án của người dùng
+      userAnswers.push(selectedAnswer); // Lưu đáp án đã chọn
 
       currentIndex++;
       selectedAnswer = null;
