@@ -144,9 +144,9 @@
   <script>
     PlayFab.settings.titleId = "13875"; // <----- ĐÃ SỬA TITLE ID
     let quizData = JSON.parse(`[
-      { "question": "6 x 6 = ?", "answers": ["30", "36", "42", "48"], "correct": 1 },
-      { "question": "9 - 4 = ?", "answers": ["4", "5", "6", "7"], "correct": 1 },
-      { "question": "7 x 2 = ?", "answers": ["14", "12", "16", "10"], "correct": 0 },
+      { "question": "Bài thuyết trình có bao nhiêu slide gồm cả slide "thanks" và slide link QR code", "answers": ["16", "17", "18", "19"], "correct": 1 },
+      { "question": "Slide đầu tiên bạn nhìn thấy có mấy hình tròn", "answers": ["3", "4", "5", "6"], "correct": 0 },
+      { "question": "Quy định bảo toàn tính mạng của IKC có mã tài liệu là gì", "answers": ["LSS007", "LSS200", "LSS400", "LSS207"], "correct": 2 },
       { "question": "18 ÷ 3 = ?", "answers": ["5", "6", "7", "8"], "correct": 1 },
       { "question": "10 + 15 = ?", "answers": ["25", "24", "23", "22"], "correct": 0 },
       { "question": "8 x 5 = ?", "answers": ["30", "40", "35", "45"], "correct": 1 },
@@ -300,7 +300,7 @@
       });
     }
 
-    function getLeaderboard() {
+function getLeaderboard() {
   document.getElementById("home").style.display = "none";
   document.getElementById("loading").style.display = "block";
 
@@ -309,33 +309,48 @@
     StartPosition: 0,
     MaxResultsCount: 10
   }, function (result) {
-    document.getElementById("loading").style.display = "none";
+    const leaderboard = result.data?.Leaderboard || [];
     const body = document.getElementById("leaderboardBody");
     body.innerHTML = "";
 
-    const leaderboard = result.data?.Leaderboard || [];
-    let count = 0;
+    // Mảng promise cho tất cả lượt gọi GetUserData
+    const promises = leaderboard.map(entry => {
+      return new Promise(resolve => {
+        PlayFabClientSDK.GetUserData({
+          PlayFabId: entry.PlayFabId,
+          Keys: ["DisplayName"]
+        }, function (dataResult) {
+          const name = dataResult.data.Data?.DisplayName?.Value || "Ẩn danh";
+          resolve({
+            position: entry.Position,
+            name: name,
+            score: entry.StatValue
+          });
+        }, function () {
+          resolve({
+            position: entry.Position,
+            name: "Ẩn danh",
+            score: entry.StatValue
+          });
+        });
+      });
+    });
 
-    leaderboard.forEach(entry => {
-      const row = document.createElement("tr");
+    // Khi tất cả promise hoàn tất
+    Promise.all(promises).then(results => {
+      // Sắp xếp lại đúng theo thứ hạng
+      results.sort((a, b) => a.position - b.position);
 
-      // Gọi thêm API để lấy UserData của từng người chơi
-      PlayFabClientSDK.GetUserData({
-        PlayFabId: entry.PlayFabId,
-        Keys: ["DisplayName"]
-      }, function (dataResult) {
-        const displayName = dataResult.data.Data?.DisplayName?.Value || "Ẩn danh";
-        row.innerHTML = `<td>${entry.Position + 1}</td><td>${displayName}</td><td>${entry.StatValue}</td>`;
-        body.appendChild(row);
-      }, function () {
-        row.innerHTML = `<td>${entry.Position + 1}</td><td>Ẩn danh</td><td>${entry.StatValue}</td>`;
+      results.forEach(entry => {
+        const row = document.createElement("tr");
+        row.innerHTML = `<td>${entry.position + 1}</td><td>${entry.name}</td><td>${entry.score}</td>`;
         body.appendChild(row);
       });
 
-      count++;
+      document.getElementById("loading").style.display = "none";
+      document.getElementById("leaderboard").style.display = "block";
     });
 
-    document.getElementById("leaderboard").style.display = "block";
   }, function (error) {
     document.getElementById("loading").style.display = "none";
     alert("Lỗi khi tải bảng xếp hạng.");
@@ -343,6 +358,7 @@
     document.getElementById("home").style.display = "block";
   });
 }
+
 
 
     function backHome() {
