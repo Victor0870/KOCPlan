@@ -163,37 +163,47 @@
     let userAnswers = [];
     let answerButtons = [];
 
-    function login() {
-      const name = document.getElementById("playerName").value.trim();
-      const code = document.getElementById("playerCode").value.trim();
-      if (name === "" || code.length !== 3 || isNaN(code)) {
-        alert("Vui lòng nhập tên và mã code 3 số hợp lệ!");
-        return;
-      }
-      const customId = `${name}_${code}`;
-      document.getElementById("home").style.display = "none";
-      document.getElementById("loading").style.display = "block";
-      PlayFabClientSDK.LoginWithCustomID({
-        CustomId: customId,
-        CreateAccount: true
-      }, function (result) {
-        PlayFabClientSDK.UpdateUserTitleDisplayName({ DisplayName: name });
-        document.getElementById("loading").style.display = "none";
-        document.getElementById("loggedInInfo").style.display = "block";
-        document.getElementById("displayName").innerText = name;
-        document.getElementById("quiz").style.display = "block";
-        shuffleArray(quizData);
-        currentIndex = 0;
-        totalScore = 0;
-        userAnswers = [];
-        showQuestion();
-      }, function (error) {
-        document.getElementById("loading").style.display = "none";
-        document.getElementById("home").style.display = "block";
-        console.error("Lỗi đăng nhập PlayFab:", error);
-        alert("Lỗi đăng nhập: " + error.errorMessage);
+  function login() {
+  const name = document.getElementById("playerName").value.trim();
+  const code = document.getElementById("playerCode").value.trim();
+  if (name === "" || code.length !== 3 || isNaN(code)) {
+    alert("Vui lòng nhập tên và mã code 3 số hợp lệ!");
+    return;
+  }
+  const customId = `${name}_${code}`;
+  document.getElementById("home").style.display = "none";
+  document.getElementById("loading").style.display = "block";
+
+  PlayFabClientSDK.LoginWithCustomID({
+    CustomId: customId,
+    CreateAccount: true,
+    InfoRequestParameters: { GetUserData: true }
+  }, function (result) {
+    // Nếu chưa có DisplayName trong UserData thì lưu
+    const userData = result.data?.InfoResultPayload?.UserData || {};
+    if (!userData.DisplayName) {
+      PlayFabClientSDK.UpdateUserData({
+        Data: { DisplayName: name }
       });
     }
+
+    document.getElementById("loading").style.display = "none";
+    document.getElementById("loggedInInfo").style.display = "block";
+    document.getElementById("displayName").innerText = name;
+    document.getElementById("quiz").style.display = "block";
+    shuffleArray(quizData);
+    currentIndex = 0;
+    totalScore = 0;
+    userAnswers = [];
+    showQuestion();
+  }, function (error) {
+    document.getElementById("loading").style.display = "none";
+    document.getElementById("home").style.display = "block";
+    console.error("Lỗi đăng nhập PlayFab:", error);
+    alert("Lỗi đăng nhập: " + error.errorMessage);
+  });
+}
+
 
     function shuffleArray(array) {
       for (let i = array.length - 1; i > 0; i--) {
