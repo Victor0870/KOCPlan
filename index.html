@@ -7,10 +7,11 @@
   <style>
     body {
       font-family: sans-serif;
-      padding: 20px;
+      padding: 25px;
       background: #f0f0f0;
       max-width: 600px;
       margin: auto;
+      font-size: 20px; /* Kích thước chữ cơ bản lớn hơn */
     }
 
     #home, #loading, #quiz, #leaderboard {
@@ -29,13 +30,14 @@
     .answer-button {
       display: block;
       margin: 10px 0;
-      padding: 10px;
+      padding: 15px; /* Tăng padding nút */
       background: #fff;
       border: 1px solid #ccc;
       border-radius: 6px;
       cursor: pointer;
       transition: background-color 0.3s ease;
       color: #000;
+      font-size: 1.2em; /* Tăng kích thước chữ nút */
     }
 
     .answer-button:hover {
@@ -49,12 +51,13 @@
     }
 
     input, button {
-      padding: 10px;
+      padding: 12px; /* Tăng padding input và button */
       margin-top: 10px;
       width: 100%;
       box-sizing: border-box;
       border-radius: 5px;
       border: 1px solid #ccc;
+      font-size: 1.1em; /* Tăng kích thước chữ input và button */
     }
 
     button {
@@ -76,33 +79,51 @@
       width: 100%;
       border-collapse: collapse;
       margin-top: 10px;
+      font-size: 1em; /* Tăng kích thước chữ bảng xếp hạng */
     }
 
     th, td {
-      padding: 8px;
+      padding: 10px; /* Tăng padding ô bảng */
       border: 1px solid #ccc;
       text-align: center;
     }
 
-    /* Media queries */
+    /* Media queries cho màn hình nhỏ (điện thoại) */
     @media (max-width: 480px) {
       body {
-        padding: 10px;
+        padding: 15px; /* Tăng padding tổng thể trên điện thoại */
+        font-size: 18px; /* Kích thước chữ lớn hơn cho điện thoại */
       }
       input, button, .answer-button {
-        padding: 8px;
-        font-size: 0.9em;
+        padding: 10px;
+        font-size: 1.2em; /* Kích thước chữ lớn hơn cho input, button, answer-button trên điện thoại */
+      }
+      table {
+        font-size: 1.1em; /* Kích thước chữ bảng xếp hạng lớn hơn trên điện thoại */
+      }
+      th, td {
+        padding: 10px;
       }
     }
 
+    /* Media queries cho màn hình trung bình (tablet) */
     @media (min-width: 481px) and (max-width: 768px) {
       body {
-        padding: 15px;
+        padding: 20px;
+        font-size: 20px;
       }
       input, button, .answer-button {
-        padding: 9px;
+        padding: 15px;
+        font-size: 1.15em;
+      }
+      table {
+        font-size: 1.05em;
+      }
+      th, td {
+        padding: 12px;
       }
     }
+  </style>
   </style>
 </head>
 <body>
