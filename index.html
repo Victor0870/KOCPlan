@@ -144,16 +144,16 @@
   <script>
     PlayFab.settings.titleId = "13875"; // <----- ĐÃ SỬA TITLE ID
     let quizData = JSON.parse(`[
-      { "question": "Bài thuyết trình có bao nhiêu slide gồm cả slide Thanks và slide link QR code", "answers": ["16", "17", "18", "19"], "correct": 1 },
-      { "question": "Slide đầu tiên bạn nhìn thấy có mấy hình tròn", "answers": ["3", "4", "5", "6"], "correct": 0 },
-      { "question": "Quy định bảo toàn tính mạng của IKC có mã tài liệu là gì", "answers": ["LSS007", "LSS200", "LSS400", "LSS207"], "correct": 2 },
+      { "question": "6 x 6 = ?", "answers": ["30", "36", "42", "48"], "correct": 1 },
+      { "question": "9 - 4 = ?", "answers": ["4", "5", "6", "7"], "correct": 1 },
+      { "question": "7 x 2 = ?", "answers": ["14", "12", "16", "10"], "correct": 0 },
       { "question": "18 ÷ 3 = ?", "answers": ["5", "6", "7", "8"], "correct": 1 },
       { "question": "10 + 15 = ?", "answers": ["25", "24", "23", "22"], "correct": 0 },
       { "question": "8 x 5 = ?", "answers": ["30", "40", "35", "45"], "correct": 1 },
       { "question": "100 - 55 = ?", "answers": ["35", "45", "55", "50"], "correct": 1 },
       { "question": "6 x 6 = ?", "answers": ["36", "30", "42", "32"], "correct": 0 },
       { "question": "81 ÷ 9 = ?", "answers": ["9", "8", "7", "6"], "correct": 0 },
-      { "question": "4 + 6 x 2 = ?", "answers": ["20", "14", "16", "12"], "correct": 2 }
+      { "question": "4 + 6 x 2 = ?", "answers": ["20", "14", "16", "12"], "correct": 1 }
     ]`);
 
     let currentIndex = 0;
@@ -163,47 +163,37 @@
     let userAnswers = [];
     let answerButtons = [];
 
-  function login() {
-  const name = document.getElementById("playerName").value.trim();
-  const code = document.getElementById("playerCode").value.trim();
-  if (name === "" || code.length !== 3 || isNaN(code)) {
-    alert("Vui lòng nhập tên và mã code 3 số hợp lệ!");
-    return;
-  }
-  const customId = `${name}_${code}`;
-  document.getElementById("home").style.display = "none";
-  document.getElementById("loading").style.display = "block";
-
-  PlayFabClientSDK.LoginWithCustomID({
-    CustomId: customId,
-    CreateAccount: true,
-    InfoRequestParameters: { GetUserData: true }
-  }, function (result) {
-    // Nếu chưa có DisplayName trong UserData thì lưu
-    const userData = result.data?.InfoResultPayload?.UserData || {};
-    if (!userData.DisplayName) {
-      PlayFabClientSDK.UpdateUserData({
-        Data: { DisplayName: name }
+    function login() {
+      const name = document.getElementById("playerName").value.trim();
+      const code = document.getElementById("playerCode").value.trim();
+      if (name === "" || code.length !== 3 || isNaN(code)) {
+        alert("Vui lòng nhập tên và mã code 3 số hợp lệ!");
+        return;
+      }
+      const customId = `${name}_${code}`;
+      document.getElementById("home").style.display = "none";
+      document.getElementById("loading").style.display = "block";
+      PlayFabClientSDK.LoginWithCustomID({
+        CustomId: customId,
+        CreateAccount: true
+      }, function (result) {
+        PlayFabClientSDK.UpdateUserTitleDisplayName({ DisplayName: name });
+        document.getElementById("loading").style.display = "none";
+        document.getElementById("loggedInInfo").style.display = "block";
+        document.getElementById("displayName").innerText = name;
+        document.getElementById("quiz").style.display = "block";
+        shuffleArray(quizData);
+        currentIndex = 0;
+        totalScore = 0;
+        userAnswers = [];
+        showQuestion();
+      }, function (error) {
+        document.getElementById("loading").style.display = "none";
+        document.getElementById("home").style.display = "block";
+        console.error("Lỗi đăng nhập PlayFab:", error);
+        alert("Lỗi đăng nhập: " + error.errorMessage);
       });
     }
-
-    document.getElementById("loading").style.display = "none";
-    document.getElementById("loggedInInfo").style.display = "block";
-    document.getElementById("displayName").innerText = name;
-    document.getElementById("quiz").style.display = "block";
-    shuffleArray(quizData);
-    currentIndex = 0;
-    totalScore = 0;
-    userAnswers = [];
-    showQuestion();
-  }, function (error) {
-    document.getElementById("loading").style.display = "none";
-    document.getElementById("home").style.display = "block";
-    console.error("Lỗi đăng nhập PlayFab:", error);
-    alert("Lỗi đăng nhập: " + error.errorMessage);
-  });
-}
-
 
     function shuffleArray(array) {
       for (let i = array.length - 1; i > 0; i--) {
@@ -300,66 +290,35 @@
       });
     }
 
-function getLeaderboard() {
-  document.getElementById("home").style.display = "none";
-  document.getElementById("loading").style.display = "block";
-
-  PlayFabClientSDK.GetLeaderboard({
-    StatisticName: "QuizScore",
-    StartPosition: 0,
-    MaxResultsCount: 10
-  }, function (result) {
-    const leaderboard = result.data?.Leaderboard || [];
-    const body = document.getElementById("leaderboardBody");
-    body.innerHTML = "";
-
-    // Mảng promise cho tất cả lượt gọi GetUserData
-    const promises = leaderboard.map(entry => {
-      return new Promise(resolve => {
-        PlayFabClientSDK.GetUserData({
-          PlayFabId: entry.PlayFabId,
-          Keys: ["DisplayName"]
-        }, function (dataResult) {
-          const name = dataResult.data.Data?.DisplayName?.Value || "Ẩn danh";
-          resolve({
-            position: entry.Position,
-            name: name,
-            score: entry.StatValue
+    function getLeaderboard() {
+      document.getElementById("home").style.display = "none";
+      document.getElementById("loading").style.display = "block";
+      PlayFabClientSDK.GetLeaderboard({
+        StatisticName: "QuizScore", // <----- CHÍNH TẢ QUAN TRỌNG: QuizScore
+        StartPosition: 0,
+        MaxResultsCount: 10
+      }, function (result) {
+        document.getElementById("loading").style.display = "none";
+        const body = document.getElementById("leaderboardBody");
+        body.innerHTML = "";
+        if (result && result.data && result.data.Leaderboard) {
+          result.data.Leaderboard.forEach(entry => {
+            const row = document.createElement("tr");
+            row.innerHTML = `<td>${entry.Position + 1}</td><td>${entry.DisplayName || entry.PlayFabId}</td><td>${entry.StatValue}</td>`;
+            body.appendChild(row);
           });
-        }, function () {
-          resolve({
-            position: entry.Position,
-            name: "Ẩn danh",
-            score: entry.StatValue
-          });
-        });
+          document.getElementById("leaderboard").style.display = "block";
+        } else {
+          alert("Không thể tải bảng xếp hạng.");
+          document.getElementById("home").style.display = "block";
+        }
+      }, function (error) {
+        document.getElementById("loading").style.display = "none";
+        alert("Lỗi khi tải bảng xếp hạng.");
+        console.error("Lỗi lấy bảng xếp hạng PlayFab:", error);
+        document.getElementById("home").style.display = "block";
       });
-    });
-
-    // Khi tất cả promise hoàn tất
-    Promise.all(promises).then(results => {
-      // Sắp xếp lại đúng theo thứ hạng
-      results.sort((a, b) => a.position - b.position);
-
-      results.forEach(entry => {
-        const row = document.createElement("tr");
-        row.innerHTML = `<td>${entry.position + 1}</td><td>${entry.name}</td><td>${entry.score}</td>`;
-        body.appendChild(row);
-      });
-
-      document.getElementById("loading").style.display = "none";
-      document.getElementById("leaderboard").style.display = "block";
-    });
-
-  }, function (error) {
-    document.getElementById("loading").style.display = "none";
-    alert("Lỗi khi tải bảng xếp hạng.");
-    console.error("Lỗi lấy bảng xếp hạng PlayFab:", error);
-    document.getElementById("home").style.display = "block";
-  });
-}
-
-
+    }
 
     function backHome() {
       document.getElementById("leaderboard").style.display = "none";
