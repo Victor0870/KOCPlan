@@ -153,7 +153,7 @@
       { "question": "100 - 55 = ?", "answers": ["35", "45", "55", "50"], "correct": 1 },
       { "question": "6 x 6 = ?", "answers": ["36", "30", "42", "32"], "correct": 0 },
       { "question": "81 ÷ 9 = ?", "answers": ["9", "8", "7", "6"], "correct": 0 },
-      { "question": "4 + 6 x 2 = ?", "answers": ["20", "14", "16", "12"], "correct": 1 }
+      { "question": "4 + 6 x 2 = ?", "answers": ["20", "14", "16", "12"], "correct": 2 }
     ]`);
 
     let currentIndex = 0;
@@ -301,34 +301,49 @@
     }
 
     function getLeaderboard() {
-      document.getElementById("home").style.display = "none";
-      document.getElementById("loading").style.display = "block";
-      PlayFabClientSDK.GetLeaderboard({
-        StatisticName: "QuizScore", // <----- CHÍNH TẢ QUAN TRỌNG: QuizScore
-        StartPosition: 0,
-        MaxResultsCount: 10
-      }, function (result) {
-        document.getElementById("loading").style.display = "none";
-        const body = document.getElementById("leaderboardBody");
-        body.innerHTML = "";
-        if (result && result.data && result.data.Leaderboard) {
-          result.data.Leaderboard.forEach(entry => {
-            const row = document.createElement("tr");
-            row.innerHTML = `<td>${entry.Position + 1}</td><td>${entry.DisplayName || entry.PlayFabId}</td><td>${entry.StatValue}</td>`;
-            body.appendChild(row);
-          });
-          document.getElementById("leaderboard").style.display = "block";
-        } else {
-          alert("Không thể tải bảng xếp hạng.");
-          document.getElementById("home").style.display = "block";
-        }
-      }, function (error) {
-        document.getElementById("loading").style.display = "none";
-        alert("Lỗi khi tải bảng xếp hạng.");
-        console.error("Lỗi lấy bảng xếp hạng PlayFab:", error);
-        document.getElementById("home").style.display = "block";
+  document.getElementById("home").style.display = "none";
+  document.getElementById("loading").style.display = "block";
+
+  PlayFabClientSDK.GetLeaderboard({
+    StatisticName: "QuizScore",
+    StartPosition: 0,
+    MaxResultsCount: 10
+  }, function (result) {
+    document.getElementById("loading").style.display = "none";
+    const body = document.getElementById("leaderboardBody");
+    body.innerHTML = "";
+
+    const leaderboard = result.data?.Leaderboard || [];
+    let count = 0;
+
+    leaderboard.forEach(entry => {
+      const row = document.createElement("tr");
+
+      // Gọi thêm API để lấy UserData của từng người chơi
+      PlayFabClientSDK.GetUserData({
+        PlayFabId: entry.PlayFabId,
+        Keys: ["DisplayName"]
+      }, function (dataResult) {
+        const displayName = dataResult.data.Data?.DisplayName?.Value || "Ẩn danh";
+        row.innerHTML = `<td>${entry.Position + 1}</td><td>${displayName}</td><td>${entry.StatValue}</td>`;
+        body.appendChild(row);
+      }, function () {
+        row.innerHTML = `<td>${entry.Position + 1}</td><td>Ẩn danh</td><td>${entry.StatValue}</td>`;
+        body.appendChild(row);
       });
-    }
+
+      count++;
+    });
+
+    document.getElementById("leaderboard").style.display = "block";
+  }, function (error) {
+    document.getElementById("loading").style.display = "none";
+    alert("Lỗi khi tải bảng xếp hạng.");
+    console.error("Lỗi lấy bảng xếp hạng PlayFab:", error);
+    document.getElementById("home").style.display = "block";
+  });
+}
+
 
     function backHome() {
       document.getElementById("leaderboard").style.display = "none";
