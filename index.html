@@ -11,7 +11,7 @@
       background: #f0f0f0;
       max-width: 600px;
       margin: auto;
-      font-size: 40px; /* Kích thước chữ cơ bản lớn hơn */
+      font-size: 30px; /* Kích thước chữ cơ bản lớn hơn */
     }
 
     #home, #loading, #quiz, #leaderboard {
@@ -29,8 +29,9 @@
 
     .answer-button {
       display: block;
+      width:100%
       margin: 10px 0;
-      padding: 25px; /* Tăng padding nút */
+      padding: 35px; /* Tăng padding nút */
       background: #fff;
       border: 1px solid #ccc;
       border-radius: 6px;
@@ -92,14 +93,14 @@
     @media (max-width: 480px) {
       body {
         padding: 25px; /* Tăng padding tổng thể trên điện thoại */
-        font-size: 36px; /* Kích thước chữ lớn hơn cho điện thoại */
+        font-size: 28px; /* Kích thước chữ lớn hơn cho điện thoại */
       }
       input, button, .answer-button {
-        padding: 20px;
-        font-size: 2.2em; /* Kích thước chữ lớn hơn cho input, button, answer-button trên điện thoại */
+        padding: 30px;
+        font-size: 1.8em; /* Kích thước chữ lớn hơn cho input, button, answer-button trên điện thoại */
       }
       table {
-        font-size: 2.1em; /* Kích thước chữ bảng xếp hạng lớn hơn trên điện thoại */
+        font-size: 1.8em; /* Kích thước chữ bảng xếp hạng lớn hơn trên điện thoại */
       }
       th, td {
         padding: 10px;
@@ -166,14 +167,14 @@
     PlayFab.settings.titleId = "13875"; // <----- ĐÃ SỬA TITLE ID
     let quizData = JSON.parse(`[
       { "question": "Quy tắc bảo vệ tính mạng có mấy quy tắc", "answers": ["4", "5", "6", "7"], "correct": 1 },
-      { "question": "Bài thuyết trình của Victor có mấy slide - gồm cả slide Thank you", "answers": ["14", "15", "16", "17"], "correct": 1 },
+      { "question": "Bài thuyết trình của Victor có mấy slide - gồm cả slide Thank you", "answers": ["14", "15", "16", "17"], "correct": 2 },
       { "question": "Trong slide đầu tiên có mấy hình tròn", "answers": ["3", "4", "5", "6"], "correct": 0 },
-      { "question": "Quy tắc bảo vệ tính mạng Phòng ngừa té ngã từ trên cao tương ứng với hành vi cấm số mấy", "answers": ["16", "3", "21", "27"], "correct": 2 },
-      { "question": "Quy tắc bảo vệ tính mạng Phòng ngừa bị kẹt tương ứng với hành vi cấm số mấy", "answers": ["16", "21", "17", "22"], "correct": 0 },
-      { "question": "Quy tắc bảo vệ tính mạng Phòng ngừa bị ngạt tương ứng với hành vi cấm số mấy", "answers": ["16", "27", "3", "8"], "correct": 2 },
-      { "question": "Quy tắc bảo vệ tính mạng Phòng ngừa bị điện giật tương ứng với hành vi cấm số mấy", "answers": ["15", "16", "17", "18"], "correct": 3 },
-      { "question": "Quy tắc bảo vệ tính mạng Không đi bộ dưới tải trọng lơ lửng có liên quan đến 2 hành vi cấm, 1 trong số đó là hành vi số:", "answers": ["16", "13", "22", "25"], "correct": 3 },
-      { "question": "Quy tắc bảo vệ tính mạng Không đi bộ dưới tải trọng lơ lửng có liên quan đến 2 hành vi cấm, 1 trong số đó là hành vi số:", "answers": ["27", "20", "15", "11"], "correct": 0 },
+      { "question": "Quy tắc Phòng ngừa té ngã từ trên cao tương ứng với hành vi cấm số mấy", "answers": ["16", "3", "21", "27"], "correct": 2 },
+      { "question": "Quy tắc Phòng ngừa bị kẹt tương ứng với hành vi cấm số mấy", "answers": ["16", "21", "17", "22"], "correct": 0 },
+      { "question": "Quy tắc Phòng ngừa bị ngạt tương ứng với hành vi cấm số mấy", "answers": ["16", "27", "3", "8"], "correct": 2 },
+      { "question": "Quy tắc Phòng ngừa bị điện giật tương ứng với hành vi cấm số mấy", "answers": ["15", "16", "17", "18"], "correct": 3 },
+      { "question": "Quy tắc Không đi bộ dưới tải trọng lơ lửng có liên quan đến 2 hành vi cấm, 1 trong số đó là hành vi số:", "answers": ["16", "13", "22", "25"], "correct": 3 },
+      { "question": "Quy tắc Không đi bộ dưới tải trọng lơ lửng có liên quan đến 2 hành vi cấm, 1 trong số đó là hành vi số:", "answers": ["27", "20", "15", "11"], "correct": 0 },
       { "question": "Trong slide mô tả hành động đi phía dưới tải trọng lơ lửng, thùng hàng có logo gì:", "answers": ["Logo Idemisu cũ", "Logo Idemisu mới", "Logo Honda", "Không có logo"], "correct": 3 },
       { "question": "Theo thông tin chia sẻ của IKC thì tiếp xúc với dòng điện bao nhiêu mA sẽ trải qua co thắt cơ và không thể buông dây điện đang cầm :", "answers": ["5mA", "10mA", "20mA", "25mA"], "correct": 2 },
       { "question": "Theo tài liệu IKC giới hạn an toàn của nồng độ Oxy là bao nhiêu", "answers": ["21%", "20%", "19%", "18%"], "correct": 3 },
@@ -182,7 +183,7 @@
       { "question": "Trong toàn bộ slide có bao nhiêu hình ảnh người công nhân đeo đai an toàn", "answers": ["1", "2", "3", "4"], "correct": 1 },
       { "question": "Trong hình ảnh cầu cảng Moji, trụ buộc dây có màu gì", "answers": ["vàng", "ghi", "nâu", "xanh lam"], "correct": 0 },
       { "question": "Trong toàn bộ slide có bao nhiêu hình ảnh người công nhân không đội mũ bảo hộ", "answers": ["0", "1", "2", "3"], "correct": 0 },
-      { "question": "Khi khóa liên động của thiết bị chuyển động bị vô hiệu hóa thì", "answers": ["Tuyệt đối cấm vận hành", "Không ảnh hưởng đến vận hành", "Có thể xin phép quản lý để vận hành", "treo biển cảnh báo và vận hành"], "correct": 2 },
+      { "question": "Quy tắc bảo vệ tính mạng là tài liệu IKC có mã hiệu ", "answers": ["LSS007", "LSS200", "LSS400", "LSS207"], "correct": 2 },
       { "question": "Trong slide Phòng ngừa điện giật có bao nhiêu cảnh báo có hình tia sét", "answers": ["5", "6", "7", "8"], "correct": 2 },
       { "question": "Trong slide cuối cùng : không đi lại dưới tải trọng lơ lửng, người công nhân ngồi trên xe nâng màu gì", "answers": ["xanh đậm", "đen", "ghi", "cam"], "correct": 3 }
     ]`);
