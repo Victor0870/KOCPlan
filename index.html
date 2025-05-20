@@ -285,8 +285,8 @@
 
       if (selectedAnswer === currentQuestion.correct) {
         questionScore = 50;
-        if (timeTakenMs <= 20000) {
-          const timeRatio = timeTakenMs / 20000;
+        if (timeTakenMs <= 40000) {
+          const timeRatio = timeTakenMs / 40000;
           bonusPoints = Math.max(0, Math.floor(50 * (1 - timeRatio)));
         }
       }
