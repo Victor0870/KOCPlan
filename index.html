@@ -1,361 +1,277 @@
 <!DOCTYPE html>
-<html lang="vi">
+<html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Game Trắc Nghiệm</title>
-  <script src="https://download.playfab.com/PlayFabClientApi.js"></script>
-  <style>
-    body {
-      font-family: sans-serif;
-      padding: 35px;
-      background: #f0f0f0;
-      max-width: 600px;
-      margin: auto;
-      font-size: 30px; /* Kích thước chữ cơ bản lớn hơn */
-    }
-
-    #home, #loading, #quiz, #leaderboard {
-      display: none;
-    }
-
-    #home {
-      display: block;
-    }
-
-    #loggedInInfo {
-      display: none;
-      margin-bottom: 10px;
-    }
-
-    .answer-button {
-      display: block;
-      width:100%
-      margin: 10px 0;
-      padding: 35px; /* Tăng padding nút */
-      background: #fff;
-      border: 1px solid #ccc;
-      border-radius: 6px;
-      cursor: pointer;
-      transition: background-color 0.3s ease;
-      color: #000;
-      font-size: 2.2em; /* Tăng kích thước chữ nút */
-    }
-
-    .answer-button:hover {
-      background: #e0e0e0;
-    }
-
-    .answer-button.selected {
-      background-color: #007bff;
-      color: white;
-      border-color: #0056b3;
-    }
-
-    input, button {
-      padding: 22px; /* Tăng padding input và button */
-      margin-top: 10px;
-      width: 100%;
-      box-sizing: border-box;
-      border-radius: 5px;
-      border: 1px solid #ccc;
-      font-size: 2.1em; /* Tăng kích thước chữ input và button */
-    }
-
-    button {
-      background: #007bff;
-      color: white;
-      border: none;
-      cursor: pointer;
-    }
-
-    button:hover {
-      background: #0056b3;
-    }
-
-    #nextButton {
-      display: none;
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 10px;
-      font-size: 2em; /* Tăng kích thước chữ bảng xếp hạng */
-    }
-
-    th, td {
-      padding: 20px; /* Tăng padding ô bảng */
-      border: 1px solid #ccc;
-      text-align: center;
-    }
-
-    /* Media queries cho màn hình nhỏ (điện thoại) */
-    @media (max-width: 480px) {
-      body {
-        padding: 25px; /* Tăng padding tổng thể trên điện thoại */
-        font-size: 28px; /* Kích thước chữ lớn hơn cho điện thoại */
-      }
-      input, button, .answer-button {
-        padding: 30px;
-        font-size: 1.8em; /* Kích thước chữ lớn hơn cho input, button, answer-button trên điện thoại */
-      }
-      table {
-        font-size: 1.8em; /* Kích thước chữ bảng xếp hạng lớn hơn trên điện thoại */
-      }
-      th, td {
-        padding: 10px;
-      }
-    }
-
-    /* Media queries cho màn hình trung bình (tablet) */
-    @media (min-width: 481px) and (max-width: 768px) {
-      body {
-        padding: 20px;
-        font-size: 40px;
-      }
-      input, button, .answer-button {
-        padding: 25px;
-        font-size: 2.15em;
-      }
-      table {
-        font-size: 2.05em;
-      }
-      th, td {
-        padding: 22px;
-      }
-    }
-  </style>
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BizMate App - Firebase Tester</title>
+    
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+    
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column; /* Để căn giữa theo chiều dọc nếu có scroll */
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: #f0f2f5;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        .login-container, .main-content-container {
+            background-color: #ffffff;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            width: 100%;
+            max-width: 500px;
+            margin: 10px 0; /* Khoảng cách giữa các container nếu nhiều */
+        }
+        .login-container h1, .main-content-container h1, .main-content-container h2 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+        input, button {
+            width: calc(100% - 20px);
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box; /* Đảm bảo padding không làm tăng width */
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .error-message {
+            color: red;
+            margin-top: 10px;
+        }
+        #main-content {
+            display: none; /* Mặc định ẩn nội dung chính */
+            padding: 20px;
+            text-align: center;
+        }
+        #firebaseOutput {
+            border: 1px solid #ccc;
+            padding: 10px;
+            min-height: 100px;
+            max-height: 300px; /* Giới hạn chiều cao để tránh quá dài */
+            overflow-y: scroll;
+            margin-top: 20px;
+            text-align: left;
+        }
+    </style>
 </head>
 <body>
-  <div id="home">
-    <h2>Game Trắc Nghiệm</h2>
-    <div id="loggedInInfo">
-      Chào <span id="displayName"></span>!
+
+    <div class="login-container" id="access-gate">
+        <h1>Private Access</h1>
+        <input type="password" id="accessPassword" placeholder="Enter password">
+        <button id="accessButton">Enter</button>
+        <p class="error-message" id="errorMessage"></p>
     </div>
-    <input id="playerName" placeholder="Tên người chơi">
-    <input id="playerCode" placeholder="Mã code 3 số" maxlength="3">
-    <button onclick="login()">Bắt đầu</button>
-    <button onclick="getLeaderboard()">Xem Bảng Xếp Hạng</button>
-  </div>
 
-  <div id="loading">Đang tải câu hỏi...</div>
+    <div class="main-content-container" id="main-content">
+        <h1>Welcome to BizMate Firebase Tester</h1>
+        <p>You have successfully bypassed the access gate. Now you can log in to Firebase.</p>
 
-  <div id="quiz">   
-    <div id="questionText" style="font-size: 1.9em; margin-bottom: 20px;"></div>
-    <div id="answerList"></div>
-    <div>Thời gian: <span id="timer">0</span> giây</div>
-    <button id="nextButton" onclick="nextQuestion()">Tiếp tục</button>
-  </div>
+        <h2>Firebase Authentication</h2>
+        <input type="email" id="firebaseEmail" placeholder="Firebase Email">
+        <input type="password" id="firebasePassword" placeholder="Firebase Password">
+        <button id="firebaseSignUpBtn">Firebase Sign Up</button>
+        <button id="firebaseSignInBtn">Firebase Sign In</button>
+        <button id="firebaseSignOutBtn">Firebase Sign Out</button>
+        <p>Current Firebase User: <span id="firebaseCurrentUser">None</span></p>
 
-  <div id="leaderboard">
-    <h3>Bảng Xếp Hạng TOP 10</h3>
-    <table>
-      <thead>
-        <tr>
-          <th>Hạng</th>
-          <th>Tên</th>
-          <th>Điểm</th>
-        </tr>
-      </thead>
-      <tbody id="leaderboardBody"></tbody>
-    </table>
-    <button onclick="backHome()">Đóng</button>
-  </div>
+        <h2>Firestore Operations (userProducts)</h2>
+        <input type="text" id="firebaseProductName" placeholder="Product Name">
+        <input type="number" id="firebaseProductPrice" placeholder="Price">
+        <input type="number" id="firebaseProductQuantity" placeholder="Quantity">
+        <button id="firebaseAddProductBtn">Add New Independent Product</button>
+        <button id="firebaseGetProductsBtn">Get My Products</button>
 
-  <script>
-    PlayFab.settings.titleId = "13875"; // <----- ĐÃ SỬA TITLE ID
-    let quizData = JSON.parse(`[
-      { "question": "Quy tắc bảo vệ tính mạng có mấy quy tắc", "answers": ["4", "5", "6", "7"], "correct": 1 },
-      { "question": "Bài thuyết trình của Victor có mấy slide - gồm cả slide Thank you", "answers": ["14", "15", "16", "17"], "correct": 2 },
-      { "question": "Trong slide đầu tiên có mấy hình tròn", "answers": ["3", "4", "5", "6"], "correct": 0 },
-      { "question": "Quy tắc Phòng ngừa té ngã từ trên cao tương ứng với hành vi cấm số mấy", "answers": ["16", "3", "21", "27"], "correct": 2 },
-      { "question": "Quy tắc Phòng ngừa bị kẹt tương ứng với hành vi cấm số mấy", "answers": ["16", "21", "17", "22"], "correct": 0 },
-      { "question": "Quy tắc Phòng ngừa bị ngạt tương ứng với hành vi cấm số mấy", "answers": ["16", "27", "3", "8"], "correct": 2 },
-      { "question": "Quy tắc Phòng ngừa bị điện giật tương ứng với hành vi cấm số mấy", "answers": ["15", "16", "17", "18"], "correct": 3 },
-      { "question": "Quy tắc Không đi bộ dưới tải trọng lơ lửng có liên quan đến 2 hành vi cấm, 1 trong số đó là hành vi số:", "answers": ["16", "13", "22", "25"], "correct": 3 },
-      { "question": "Quy tắc Không đi bộ dưới tải trọng lơ lửng có liên quan đến 2 hành vi cấm, 1 trong số đó là hành vi số:", "answers": ["27", "20", "15", "11"], "correct": 0 },
-      { "question": "Trong slide mô tả hành động đi phía dưới tải trọng lơ lửng, thùng hàng có logo gì:", "answers": ["Logo Idemisu cũ", "Logo Idemisu mới", "Logo Honda", "Không có logo"], "correct": 3 },
-      { "question": "Theo thông tin chia sẻ của IKC thì tiếp xúc với dòng điện bao nhiêu mA sẽ trải qua co thắt cơ và không thể buông dây điện đang cầm :", "answers": ["5mA", "10mA", "20mA", "25mA"], "correct": 2 },
-      { "question": "Theo tài liệu IKC giới hạn an toàn của nồng độ Oxy là bao nhiêu", "answers": ["21%", "20%", "19%", "18%"], "correct": 3 },
-      { "question": "Quy tắc bảo vệ tính mạng số 4 là", "answers": ["Phòng ngừa điện giật ", "Phòng ngừa bị ngạt", "Phòng ngừa té ngã từ trên cao", "phòng ngừa bị kẹt"], "correct": 0 },
-      { "question": "Quy tắc Phòng ngừa bị kẹt là quy tắc số mấy", "answers": ["1", "2", "3", "4"], "correct": 1 },
-      { "question": "Trong toàn bộ slide có bao nhiêu hình ảnh người công nhân đeo đai an toàn", "answers": ["1", "2", "3", "4"], "correct": 1 },
-      { "question": "Trong hình ảnh cầu cảng Moji, trụ buộc dây có màu gì", "answers": ["vàng", "ghi", "nâu", "xanh lam"], "correct": 0 },
-      { "question": "Trong toàn bộ slide có bao nhiêu hình ảnh người công nhân không đội mũ bảo hộ", "answers": ["0", "1", "2", "3"], "correct": 0 },
-      { "question": "Quy tắc bảo vệ tính mạng là tài liệu IKC có mã hiệu ", "answers": ["LSS007", "LSS200", "LSS400", "LSS207"], "correct": 2 },
-      { "question": "Trong slide Phòng ngừa điện giật có bao nhiêu cảnh báo có hình tia sét", "answers": ["5", "6", "7", "8"], "correct": 2 },
-      { "question": "Trong slide cuối cùng : không đi lại dưới tải trọng lơ lửng, người công nhân ngồi trên xe nâng màu gì", "answers": ["xanh đậm", "đen", "ghi", "cam"], "correct": 3 }
-    ]`);
+        <div id="firebaseOutput"></div>
 
-    let currentIndex = 0;
-    let totalScore = 0;
-    let timerInterval, startTime;
-    let selectedAnswer = null;
-    let userAnswers = [];
-    let answerButtons = [];
+    </div>
 
-    function login() {
-      const name = document.getElementById("playerName").value.trim();
-      const code = document.getElementById("playerCode").value.trim();
-      if (name === "" || code.length !== 3 || isNaN(code)) {
-        alert("Vui lòng nhập tên và mã code 3 số hợp lệ!");
-        return;
-      }
-      const customId = `${name}_${code}`;
-      document.getElementById("home").style.display = "none";
-      document.getElementById("loading").style.display = "block";
-      PlayFabClientSDK.LoginWithCustomID({
-        CustomId: customId,
-        CreateAccount: true
-      }, function (result) {
-        PlayFabClientSDK.UpdateUserTitleDisplayName({ DisplayName: name });
-        document.getElementById("loading").style.display = "none";
-        document.getElementById("loggedInInfo").style.display = "block";
-        document.getElementById("displayName").innerText = name;
-        document.getElementById("quiz").style.display = "block";
-        shuffleArray(quizData);
-        currentIndex = 0;
-        totalScore = 0;
-        userAnswers = [];
-        showQuestion();
-      }, function (error) {
-        document.getElementById("loading").style.display = "none";
-        document.getElementById("home").style.display = "block";
-        console.error("Lỗi đăng nhập PlayFab:", error);
-        alert("Lỗi đăng nhập: " + error.errorMessage);
-      });
-    }
+    <script>
+        // Mật khẩu cứng - KHÔNG AN TOÀN cho production
+        const ACCESS_PASSWORD = "hahahihi"; // MẬT KHẨU ĐẦU TIÊN CỦA BẠN
 
-    function shuffleArray(array) {
-      for (let i = array.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [array[i], array[j]] = [array[j], array[i]];
-      }
-    }
+        const accessPasswordInput = document.getElementById('accessPassword');
+        const accessButton = document.getElementById('accessButton');
+        const errorMessage = document.getElementById('errorMessage');
+        const accessGate = document.getElementById('access-gate');
+        const mainContent = document.getElementById('main-content');
 
-    function showQuestion() {
-      const q = quizData[currentIndex];
-      document.getElementById("questionText").innerText = `Câu ${currentIndex + 1}: ${q.question}`;
-      const answerList = document.getElementById("answerList");
-      answerList.innerHTML = "";
-      selectedAnswer = null;
-      document.getElementById("nextButton").style.display = "none";
-      answerButtons = [];
+        accessButton.addEventListener('click', () => {
+            if (accessPasswordInput.value === ACCESS_PASSWORD) {
+                accessGate.style.display = 'none';
+                mainContent.style.display = 'block';
+                errorMessage.textContent = '';
+                initializeFirebaseTester(); // Gọi hàm khởi tạo Firebase Tester
+            } else {
+                errorMessage.textContent = 'Incorrect password. Please try again.';
+            }
+        });
 
-      startTime = Date.now();
-      document.getElementById("timer").innerText = "0";
-      clearInterval(timerInterval);
-      timerInterval = setInterval(() => {
-        const elapsed = Math.floor((Date.now() - startTime) / 1000);
-        document.getElementById("timer").innerText = elapsed;
-      }, 1000);
+        accessPasswordInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                accessButton.click();
+            }
+        });
 
-      q.answers.forEach((ans, idx) => {
-        const btn = document.createElement("button");
-        btn.className = "answer-button";
-        btn.innerText = ans;
-        btn.onclick = () => {
-          answerButtons.forEach(b => b.classList.remove("selected"));
-          selectedAnswer = idx;
-          btn.classList.add("selected");
-          document.getElementById("nextButton").style.display = "block";
-        };
-        answerList.appendChild(btn);
-        answerButtons.push(btn);
-      });
+        // Hàm khởi tạo Firebase Tester
+        function initializeFirebaseTester() {
+            // Cấu hình Firebase của bạn - ĐÃ ĐƯỢC ĐIỀN TỪ HÌNH ẢNH CỦA BẠN
+            const firebaseConfig = {
+              apiKey: "AIzaSyB3poefFCUsl1XzayAyXZFEDBK6LOP1J6WA",
+              authDomain: "bizmate-1e317.firebaseapp.com",
+              projectId: "bizmate-1e317",
+              storageBucket: "bizmate-1e317.firebaseapp.com",
+              messagingSenderId: "924296680961",
+              appId: "1:924296680961:web:214b1537a63cb8187c5200",
+              measurementId: "G-LDLDL92GXJ59"
+            };
 
-      document.getElementById("nextButton").innerText = currentIndex < quizData.length - 1 ? "Tiếp tục" : "Kết thúc";
-    }
+            // Khởi tạo Firebase
+            firebase.initializeApp(firebaseConfig);
 
-    function nextQuestion() {
-      clearInterval(timerInterval);
-      if (selectedAnswer === null) {
-        alert("Vui lòng chọn một đáp án!");
-        return;
-      }
+            const auth = firebase.auth();
+            const db = firebase.firestore();
 
-      const endTime = Date.now();
-      const timeTakenMs = endTime - startTime; // Thời gian trả lời bằng milliseconds
-      userAnswers.push(selectedAnswer);
+            const firebaseEmailInput = document.getElementById('firebaseEmail');
+            const firebasePasswordInput = document.getElementById('firebasePassword');
+            const firebaseCurrentUserSpan = document.getElementById('firebaseCurrentUser');
+            const firebaseOutputDiv = document.getElementById('firebaseOutput');
 
-      const currentQuestion = quizData[currentIndex];
-      let questionScore = 0; // Điểm cơ bản
-      let bonusPoints = 0;
+            // Auth Listeners
+            auth.onAuthStateChanged(user => {
+                if (user) {
+                    firebaseCurrentUserSpan.textContent = user.email + " (UID: " + user.uid + ")";
+                } else {
+                    firebaseCurrentUserSpan.textContent = "None";
+                }
+            });
 
-      if (selectedAnswer === currentQuestion.correct) {
-        questionScore = 50;
-        if (timeTakenMs <= 40000) {
-          const timeRatio = timeTakenMs / 40000;
-          bonusPoints = Math.max(0, Math.floor(50 * (1 - timeRatio)));
+            // Auth Functions
+            document.getElementById('firebaseSignUpBtn').addEventListener('click', () => {
+                auth.createUserWithEmailAndPassword(firebaseEmailInput.value, firebasePasswordInput.value)
+                    .then(userCredential => {
+                        logToFirebaseOutput("User signed up: " + userCredential.user.email);
+                        // Tạo profile user ban đầu trong Firestore (giống logic Unity)
+                        const userDocRef = db.collection('users').doc(userCredential.user.uid);
+                        userDocRef.set({
+                            email: userCredential.user.email,
+                            name: userCredential.user.email.split('@')[0],
+                            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                        }).then(() => logToFirebaseOutput("User profile created in Firestore."));
+                    })
+                    .catch(error => logToFirebaseOutput("Sign Up Error: " + error.message));
+            });
+
+            document.getElementById('firebaseSignInBtn').addEventListener('click', () => {
+                auth.signInWithEmailAndPassword(firebaseEmailInput.value, firebasePasswordInput.value)
+                    .then(userCredential => {
+                        logToFirebaseOutput("User signed in: " + userCredential.user.email);
+                    })
+                    .catch(error => logToFirebaseOutput("Sign In Error: " + error.message));
+            });
+
+            document.getElementById('firebaseSignOutBtn').addEventListener('click', () => {
+                auth.signOut()
+                    .then(() => logToFirebaseOutput("User signed out."))
+                    .catch(error => logToFirebaseOutput("Sign Out Error: " + error.message));
+            });
+
+            // Firestore Functions
+            document.getElementById('firebaseAddProductBtn').addEventListener('click', async () => {
+                const user = auth.currentUser;
+                if (!user) {
+                    logToFirebaseOutput("Please sign in to add product.");
+                    return;
+                }
+
+                const productName = document.getElementById('firebaseProductName').value;
+                const productPrice = parseFloat(document.getElementById('firebaseProductPrice').value);
+                const productQuantity = parseInt(document.getElementById('firebaseProductQuantity').value);
+
+                if (!productName || isNaN(productPrice) || isNaN(productQuantity)) {
+                    logToFirebaseOutput("Please fill all product fields.");
+                    return;
+                }
+
+                try {
+                    const productData = {
+                        ownerUid: user.uid,
+                        masterProductId: null, // Test sản phẩm độc lập
+                        name: productName,
+                        price: productPrice,
+                        quantity: productQuantity,
+                        description: "Mô tả sản phẩm test từ web", // Thêm các trường khác
+                        category: "Test Category",
+                        imageUrl: "https://via.placeholder.com/150",
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                    };
+                    const docRef = await db.collection('userProducts').add(productData);
+                    logToFirebaseOutput("Product added with ID: " + docRef.id);
+                } catch (error) {
+                    logToFirebaseOutput("Error adding product: " + error.message);
+                }
+            });
+
+            document.getElementById('firebaseGetProductsBtn').addEventListener('click', async () => {
+                const user = auth.currentUser;
+                if (!user) {
+                    logToFirebaseOutput("Please sign in to get products.");
+                    return;
+                }
+                try {
+                    const snapshot = await db.collection('userProducts')
+                                            .where('ownerUid', '==', user.uid)
+                                            .get();
+                    if (snapshot.empty) {
+                        logToFirebaseOutput("No products found for this user.");
+                        return;
+                    }
+                    let productsHtml = "<h3>Your Products:</h3><ul>";
+                    snapshot.forEach(doc => {
+                        const data = doc.data();
+                        productsHtml += `<li><strong>${data.name}</strong> (ID: ${doc.id}) - Price: ${data.price} - Qty: ${data.quantity}`;
+                        if (data.masterProductId) {
+                            productsHtml += ` (Master Product ID: ${data.masterProductId})`;
+                        } else {
+                            productsHtml += ` (Independent Product)`;
+                        }
+                        productsHtml += `</li>`;
+                    });
+                    productsHtml += "</ul>";
+                    logToFirebaseOutput(productsHtml);
+
+                } catch (error) {
+                    logToFirebaseOutput("Error getting products: " + error.message);
+                }
+            });
+
+            function logToFirebaseOutput(message) {
+                const p = document.createElement('p');
+                p.innerHTML = message;
+                firebaseOutputDiv.prepend(p); // Add to top
+            }
         }
-      }
-
-      totalScore += questionScore + bonusPoints;
-
-      currentIndex++;
-      selectedAnswer = null;
-      document.getElementById("nextButton").style.display = "none";
-
-      if (currentIndex < quizData.length) {
-        showQuestion();
-      } else {
-        document.getElementById("quiz").style.display = "none";
-        submitResult(totalScore);
-      }
-    }
-
-    function submitResult(score) {
-      document.getElementById("loading").style.display = "block";
-      PlayFabClientSDK.ExecuteCloudScript({
-        FunctionName: "SubmitQuizScore",
-        FunctionParameter: { correct: score }
-      }, function (result) {
-        document.getElementById("loading").style.display = "none";
-        document.getElementById("home").style.display = "block";
-        alert("Đã hoàn thành bài trắc nghiệm! Tổng điểm của bạn: " + score + ". Điểm đã được gửi lên bảng xếp hạng.");
-      }, function (error) {
-        document.getElementById("loading").style.display = "none";
-        alert("Lỗi khi nộp điểm: " + error.errorMessage);
-        console.error("Lỗi gửi điểm lên PlayFab:", error);
-        document.getElementById("home").style.display = "block";
-      });
-    }
-
-    function getLeaderboard() {
-      document.getElementById("home").style.display = "none";
-      document.getElementById("loading").style.display = "block";
-      PlayFabClientSDK.GetLeaderboard({
-        StatisticName: "QuizScore", // <----- CHÍNH TẢ QUAN TRỌNG: QuizScore
-        StartPosition: 0,
-        MaxResultsCount: 10
-      }, function (result) {
-        document.getElementById("loading").style.display = "none";
-        const body = document.getElementById("leaderboardBody");
-        body.innerHTML = "";
-        if (result && result.data && result.data.Leaderboard) {
-          result.data.Leaderboard.forEach(entry => {
-            const row = document.createElement("tr");
-            row.innerHTML = `<td>${entry.Position + 1}</td><td>${entry.DisplayName || entry.PlayFabId}</td><td>${entry.StatValue}</td>`;
-            body.appendChild(row);
-          });
-          document.getElementById("leaderboard").style.display = "block";
-        } else {
-          alert("Không thể tải bảng xếp hạng.");
-          document.getElementById("home").style.display = "block";
-        }
-      }, function (error) {
-        document.getElementById("loading").style.display = "none";
-        alert("Lỗi khi tải bảng xếp hạng.");
-        console.error("Lỗi lấy bảng xếp hạng PlayFab:", error);
-        document.getElementById("home").style.display = "block";
-      });
-    }
-
-    function backHome() {
-      document.getElementById("leaderboard").style.display = "none";
-      document.getElementById("home").style.display = "block";
-    }
-  </script>
+    </script>
 </body>
 </html>
