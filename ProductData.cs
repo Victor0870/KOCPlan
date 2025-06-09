@@ -1,35 +1,42 @@
 // File: ProductData.cs
-using System;
-// Không cần using UnityEngine; vì ProductData là một class dữ liệu thuần túy
+using Firebase.Firestore; // Cần dùng để gán DocumentReference hoặc DocumentSnapshot ID
 
-[System.Serializable]
+[FirestoreData] // Đảm bảo class này có thể được chuyển đổi bởi Firestore
+[System.Serializable] // Đảm bảo class này có thể được serialize bởi Unity (nếu cần)
 public class ProductData
 {
-    // Đảm bảo tên biến khớp với key trong Firestore/JSON của bạn
-    // Ví dụ: "productName" trong JSON -> public string productName;
-    public string productName;
-    public string unit;
-    public long price;       // Sử dụng long cho giá để khớp với kiểu Number trong Firestore
-    public long importPrice; // Tương tự cho giá nhập
-    public string barcode;
-    public string imageUrl;
-    public long stock;       // Stock cũng có thể là long
-    public string category;
-    public string manufacturer;
+    // Thêm trường này để lưu trữ Document ID từ Firestore
+    // Quan trọng: Trường này sẽ KHÔNG được lưu trữ trong Firestore, mà chỉ dùng để tham chiếu cục bộ
+    [FirestoreProperty(ExcludeFromConversion = true)] // Ngăn Firestore cố gắng ghi lại trường này
+    public string productId { get; set; } // Firestore Document ID
 
-    // Bạn có thể thêm một constructor nếu muốn khởi tạo dễ dàng hơn
+    [FirestoreProperty("productName")]
+    public string productName { get; set; }
+
+    [FirestoreProperty("unit")]
+    public string unit { get; set; }
+
+    [FirestoreProperty("price")]
+    public long price { get; set; } // Nên dùng long cho tiền hoặc số lượng lớn
+
+    [FirestoreProperty("importPrice")]
+    public long importPrice { get; set; }
+
+    [FirestoreProperty("barcode")]
+    public string barcode { get; set; }
+
+    [FirestoreProperty("imageUrl")]
+    public string imageUrl { get; set; }
+
+    [FirestoreProperty("stock")]
+    public long stock { get; set; } // Nên dùng long cho số lượng tồn kho
+
+    [FirestoreProperty("category")]
+    public string category { get; set; }
+
+    [FirestoreProperty("manufacturer")]
+    public string manufacturer { get; set; }
+
+    // Constructor mặc định cần thiết cho Firestore
     public ProductData() { }
-
-    public ProductData(string productName, string unit, long price, long importPrice, string barcode, string imageUrl, long stock, string category, string manufacturer)
-    {
-        this.productName = productName;
-        this.unit = unit;
-        this.price = price;
-        this.importPrice = importPrice;
-        this.barcode = barcode;
-        this.imageUrl = imageUrl;
-        this.stock = stock;
-        this.category = category;
-        this.manufacturer = manufacturer;
-    }
 }
