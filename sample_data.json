@@ -1,0 +1,114 @@
+{
+  "pharma": {
+    "SP001": {
+      "productName": "Paracetamol 500mg",
+      "unit": "Hộp",
+      "price": 15000,
+      "importPrice": 10000,
+      "barcode": "8935200000011",
+      "imageUrl": "https://example.com/images/sp1.jpg",
+      "stock": 0,
+      "category": "Thuốc giảm đau",
+      "manufacturer": "Traphaco"
+    },
+    "SP002": {
+      "productName": "Vitamin C 1000mg",
+      "unit": "Hộp",
+      "price": 18000,
+      "importPrice": 12000,
+      "barcode": "8935200000022",
+      "imageUrl": "https://example.com/images/sp2.jpg",
+      "stock": 0,
+      "category": "Vitamin & Khoáng",
+      "manufacturer": "DHG Pharma"
+    },
+    "SP003": {
+      "productName": "Amoxicillin 500mg",
+      "unit": "Vỉ",
+      "price": 22000,
+      "importPrice": 16000,
+      "barcode": "8935200000033",
+      "imageUrl": "https://example.com/images/sp3.jpg",
+      "stock": 0,
+      "category": "Kháng sinh",
+      "manufacturer": "Imexpharm"
+    },
+    "SP004": {
+      "productName": "Gastropulgite",
+      "unit": "Hộp",
+      "price": 25000,
+      "importPrice": 19000,
+      "barcode": "8935200000044",
+      "imageUrl": "https://example.com/images/sp4.jpg",
+      "stock": 0,
+      "category": "Dạ dày",
+      "manufacturer": "Domesco"
+    },
+    "SP005": {
+      "productName": "Terpin Codein",
+      "unit": "Vỉ",
+      "price": 27000,
+      "importPrice": 20000,
+      "barcode": "8935200000055",
+      "imageUrl": "https://example.com/images/sp5.jpg",
+      "stock": 0,
+      "category": "Hô hấp",
+      "manufacturer": "Pymepharco"
+    },
+    "SP006": {
+      "productName": "Cefixim 200mg",
+      "unit": "Vỉ",
+      "price": 30000,
+      "importPrice": 22000,
+      "barcode": "8935200000066",
+      "imageUrl": "https://example.com/images/sp6.jpg",
+      "stock": 0,
+      "category": "Kháng sinh",
+      "manufacturer": "Imexpharm"
+    },
+    "SP007": {
+      "productName": "Betadine sát khuẩn",
+      "unit": "Chai",
+      "price": 28000,
+      "importPrice": 21000,
+      "barcode": "8935200000077",
+      "imageUrl": "https://example.com/images/sp7.jpg",
+      "stock": 0,
+      "category": "Ngoài da",
+      "manufacturer": "Traphaco"
+    },
+    "SP008": {
+      "productName": "Natri Clorid 0.9%",
+      "unit": "Chai",
+      "price": 12000,
+      "importPrice": 8000,
+      "barcode": "8935200000088",
+      "imageUrl": "https://example.com/images/sp8.jpg",
+      "stock": 0,
+      "category": "Nhỏ mắt / mũi",
+      "manufacturer": "DHG Pharma"
+    },
+    "SP009": {
+      "productName": "Omeprazol 20mg",
+      "unit": "Vỉ",
+      "price": 23000,
+      "importPrice": 17000,
+      "barcode": "8935200000099",
+      "imageUrl": "https://example.com/images/sp9.jpg",
+      "stock": 0,
+      "category": "Dạ dày",
+      "manufacturer": "Domesco"
+    },
+    "SP010": {
+      "productName": "Vitamin B Complex",
+      "unit": "Hộp",
+      "price": 26000,
+      "importPrice": 20000,
+      "barcode": "8935200000100",
+      "imageUrl": "https://example.com/images/sp10.jpg",
+      "stock": 0,
+      "category": "Vitamin & Khoáng",
+      "manufacturer": "Pymepharco"
+    }
+  }
+}
