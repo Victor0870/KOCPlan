@@ -25,6 +25,12 @@ public class InventoryManager : MonoBehaviour
     private FirebaseFirestore db;
     private CollectionReference userProductsCollection; // Collection sản phẩm của người dùng
     private CollectionReference sampleInventoriesCollection; // Collection kho mẫu
+    
+    // Đã di chuyển [Header] vào đây cho dễ nhìn hơn, không bắt buộc
+    [Header("Inventory Display UI")] 
+    public Transform productListContentParent; // Kéo GameObject Content của ScrollView vào đây
+    public GameObject productItemPrefab;       // Kéo Prefab UI của một sản phẩm vào đây
+
 
     // Danh sách các ngành hàng mẫu và ID Firestore tương ứng
     // ID Firestore sẽ khớp với key cấp cao nhất trong JSON của bạn (ví dụ: "pharma", "retail")
@@ -94,10 +100,6 @@ public class InventoryManager : MonoBehaviour
     {
         // Hiển thị loading khi kiểm tra
         if (inventoryStatusText != null) inventoryStatusText.text = "Đang kiểm tra kho hàng của bạn...";
-        // Sử dụng loading panel chung của AuthManager nếu nó public hoặc riêng của InventoryManager
-        // Tùy thuộc vào thiết kế UI của bạn. Nếu bạn muốn dùng loadingPanel của AuthManager,
-        // thì cần thêm tham chiếu Public GameObject loadingPanel; vào InventoryManager và gán nó.
-        // Hoặc sử dụng một loading panel riêng trong scene InventoryManager.
         if (sampleLoadingPanel != null) sampleLoadingPanel.SetActive(true); // Sử dụng sampleLoadingPanel làm loading tổng
 
         try
@@ -127,8 +129,7 @@ public class InventoryManager : MonoBehaviour
                     // Kho có dữ liệu, ẩn lựa chọn kho mẫu
                     if (sampleInventorySelectionPanel != null) sampleInventorySelectionPanel.SetActive(false);
                     if (inventoryStatusText != null) inventoryStatusText.text = "Kho hàng của bạn có dữ liệu.";
-                    // TODO: Hiển thị dữ liệu tồn kho hiện có bằng cách gọi hàm LoadUserProducts()
-                    LoadUserProducts();
+                    LoadUserProducts(); // Hiển thị dữ liệu tồn kho hiện có
                 }
             });
         }
@@ -210,7 +211,7 @@ public class InventoryManager : MonoBehaviour
                 
                 // Sau khi sao chép, ẩn panel chọn mẫu và tải lại kho hàng
                 sampleInventorySelectionPanel.SetActive(false);
-                CheckUserInventory(); // Tải lại kho hàng để hiển thị dữ liệu mới
+                LoadUserProducts(); // Tải lại kho hàng để hiển thị dữ liệu mới
             });
         }
         catch (Exception e)
@@ -248,7 +249,7 @@ public class InventoryManager : MonoBehaviour
         }
     }
 
-    // Ví dụ về cách tải sản phẩm từ kho của người dùng (để hiển thị)
+    // Hàm này sẽ tải sản phẩm từ kho của người dùng và gọi UpdateInventoryUI để hiển thị
     public async Task LoadUserProducts()
     {
         try
@@ -260,17 +261,60 @@ public class InventoryManager : MonoBehaviour
                 ProductData product = document.ConvertTo<ProductData>();
                 products.Add(product);
             }
-            // TODO: Hiển thị 'products' này trên UI của bạn
-            Debug.Log($"Đã tải {products.Count} sản phẩm từ kho của người dùng.");
-            // Gọi một hàm để cập nhật UI của bạn, ví dụ: UpdateInventoryUI(products);
-            // Example:
-            // if (inventoryContentPanel != null) {
-            //     // Clear old items and instantiate new UI elements for each product
-            // }
+
+            UnityMainThreadDispatcher.Instance().Enqueue(() => {
+                UpdateInventoryUI(products); // Gọi hàm cập nhật UI trên Main Thread
+                if (inventoryStatusText != null) inventoryStatusText.text = $"Đã tải {products.Count} sản phẩm.";
+                if (sampleLoadingPanel != null) sampleLoadingPanel.SetActive(false); // Đảm bảo loading tắt
+            });
         }
         catch (Exception e)
         {
             Debug.LogError("Lỗi khi tải sản phẩm của người dùng: " + e.Message);
+            UnityMainThreadDispatcher.Instance().Enqueue(() => {
+                if (inventoryStatusText != null) inventoryStatusText.text = "Lỗi khi tải sản phẩm.";
+                if (sampleLoadingPanel != null) sampleLoadingPanel.SetActive(false);
+            });
         }
     }
-}
+
+    // Hàm này sẽ cập nhật UI hiển thị danh sách sản phẩm
+    public void UpdateInventoryUI(List<ProductData> products)
+    {
+        // 1. Xóa các sản phẩm cũ trên UI (nếu có) để tránh trùng lặp
+        foreach (Transform child in productListContentParent)
+        {
+            Destroy(child.gameObject);
+        }
+
+        // 2. Tạo các GameObject UI mới cho từng sản phẩm và đổ dữ liệu
+        if (products != null && products.Count > 0)
+        {
+            foreach (ProductData product in products)
+            {
+                GameObject productItemGO = Instantiate(productItemPrefab, productListContentParent);
+                ProductUIItem uiItem = productItemGO.GetComponent<ProductUIItem>();
+                if (uiItem != null)
+                {
+                    uiItem.SetProductData(product); // Gọi hàm để đổ dữ liệu vào Prefab
+                }
+                else
+                {
+                    Debug.LogWarning("Prefab productItemPrefab không có script ProductUIItem.");
+                }
+            }
+        }
+        else
+        {
+            // Hiển thị thông báo kho trống hoặc hướng dẫn người dùng
+            Debug.Log("Không có sản phẩm nào để hiển thị.");
+            if (inventoryStatusText != null) inventoryStatusText.text = "Kho hàng của bạn đang trống. Thêm sản phẩm hoặc tạo từ mẫu.";
+            // Đảm bảo panel chọn mẫu được hiển thị nếu chưa có sản phẩm
+            if (sampleInventorySelectionPanel != null && productListContentParent.childCount == 0)
+            {
+                sampleInventorySelectionPanel.SetActive(true);
+            }
+        }
+    }
+
+} // Đóng class InventoryManager
