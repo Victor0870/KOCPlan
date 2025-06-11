@@ -1,14 +1,14 @@
-// File: ProductData.cs
-using Firebase.Firestore; // Cần dùng để gán DocumentReference hoặc DocumentSnapshot ID
+using Firebase.Firestore;
+using System;
 
 [FirestoreData] // Đảm bảo class này có thể được chuyển đổi bởi Firestore
-[System.Serializable] // Đảm bảo class này có thể được serialize bởi Unity (nếu cần)
+[Serializable] // Đảm bảo class này có thể được serialize bởi Unity (nếu cần)
 public class ProductData
 {
-    // Thêm trường này để lưu trữ Document ID từ Firestore
-    // Quan trọng: Trường này sẽ KHÔNG được lưu trữ trong Firestore, mà chỉ dùng để tham chiếu cục bộ
-    [FirestoreProperty(ExcludeFromConversion = true)] // Ngăn Firestore cố gắng ghi lại trường này
-    public string productId { get; set; } // Firestore Document ID
+    // Trường này dùng để lưu trữ Document ID từ Firestore.
+    // KHÔNG gắn [FirestoreProperty] vì đây không phải là một trường dữ liệu trong document Firestore.
+    // Document ID được quản lý bởi Firestore và được truy cập thông qua DocumentSnapshot.Id.
+    public string productId { get; set; }
 
     [FirestoreProperty("productName")]
     public string productName { get; set; }
@@ -37,6 +37,6 @@ public class ProductData
     [FirestoreProperty("manufacturer")]
     public string manufacturer { get; set; }
 
-    // Constructor mặc định cần thiết cho Firestore
+    // Constructor mặc định cần thiết cho Firestore để deserialize dữ liệu
     public ProductData() { }
 }
