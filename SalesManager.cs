@@ -1,4 +1,3 @@
-// File: SalesManager.cs
 using UnityEngine;
 using TMPro;
 using UnityEngine.UI;
@@ -57,6 +56,7 @@ public class SalesManager : MonoBehaviour
     private CollectionReference userProductsCollection;
     private CollectionReference userCustomersCollection; // NEW: Collection khách hàng
     private CollectionReference userSalesCollection; // NEW: Collection đơn hàng
+    private ListenerRegistration productsListenerRegistration; // Biến để lưu trữ đăng ký listener
 
     private List<ProductData> allUserProducts = new List<ProductData>(); // Cache các sản phẩm trong kho
     private Dictionary<string, ProductData> productsInCart = new Dictionary<string, ProductData>(); // ProductID -> ProductData (trong đó stock là số lượng trong giỏ)
@@ -72,7 +72,7 @@ public class SalesManager : MonoBehaviour
         // Khởi tạo trạng thái UI
         if (searchResultDisplayPanel != null) searchResultDisplayPanel.SetActive(false);
         if (cartEmptyPromptPanel != null) cartEmptyPromptPanel.SetActive(true); // Ban đầu giỏ hàng trống
-        
+
         SetCustomerInputFieldsInteractable(true); // Ban đầu cho phép nhập thông tin khách hàng mới
         customerLookupStatusText.text = "";
     }
@@ -106,6 +106,11 @@ public class SalesManager : MonoBehaviour
         {
             auth.StateChanged -= AuthStateChanged;
         }
+        // Hủy đăng ký listener khi đối tượng bị hủy
+        if (productsListenerRegistration != null)
+        {
+            productsListenerRegistration.Dispose();
+        }
     }
 
     private void AuthStateChanged(object sender, EventArgs e)
@@ -120,7 +125,7 @@ public class SalesManager : MonoBehaviour
                 userCustomersCollection = db.Collection("shops").Document(currentUser.UserId).Collection("customers");
                 userSalesCollection = db.Collection("shops").Document(currentUser.UserId).Collection("sales");
                 Debug.Log($"SalesManager: User collections initialized for UID: {currentUser.UserId}");
-                LoadAllInventoryProducts(); // Tải kho hàng để tìm kiếm
+                SetupProductsListener(); // Thiết lập listener để tải và cập nhật sản phẩm
             }
             else
             {
@@ -128,37 +133,71 @@ public class SalesManager : MonoBehaviour
                 userCustomersCollection = null;
                 userSalesCollection = null;
                 Debug.Log("SalesManager: User logged out.");
+                // Hủy đăng ký listener khi người dùng đăng xuất
+                if (productsListenerRegistration != null)
+                {
+                    productsListenerRegistration.Dispose();
+                    productsListenerRegistration = null;
+                }
                 // Chuyển về màn hình đăng nhập nếu cần
             }
         }
     }
 
-    private async void LoadAllInventoryProducts()
+    // --- THAY ĐỔI LỚN TẠI ĐÂY: Sử dụng SnapshotListener cho sản phẩm ---
+    private void SetupProductsListener()
     {
         if (userProductsCollection == null) return;
-        allUserProducts.Clear();
-        try
+
+        // Hủy đăng ký listener cũ nếu có
+        if (productsListenerRegistration != null)
         {
-            QuerySnapshot snapshot = await userProductsCollection.GetSnapshotAsync();
-            foreach (DocumentSnapshot document in snapshot.Documents)
+            productsListenerRegistration.Dispose();
+        }
+
+        // Thiết lập listener mới
+        productsListenerRegistration = userProductsCollection.Listen(snapshot =>
+        {
+            UnityMainThreadDispatcher.Instance().Enqueue(() =>
             {
-                ProductData product = document.ConvertTo<ProductData>();
-                product.productId = document.Id;
-                allUserProducts.Add(product);
-            }
-            Debug.Log($"SalesManager: Loaded {allUserProducts.Count} products from inventory for search.");
-        }
-        catch (Exception e)
-        {
-            Debug.LogError($"SalesManager: Error loading inventory products: {e.Message}");
-        }
+                Debug.Log($"SalesManager: Nhận được cập nhật sản phẩm từ Firestore. Số lượng thay đổi: {snapshot.Changes.Count}");
+                foreach (DocumentChange change in snapshot.Changes)
+                {
+                    ProductData product = change.Document.ConvertTo<ProductData>();
+                    product.productId = change.Document.Id; // Gán ID của document
+
+                    switch (change.ChangeType)
+                    {
+                        case DocumentChange.Type.Added:
+                            if (!allUserProducts.Any(p => p.productId == product.productId))
+                            {
+                                allUserProducts.Add(product);
+                            }
+                            break;
+                        case DocumentChange.Type.Modified:
+                            int index = allUserProducts.FindIndex(p => p.productId == product.productId);
+                            if (index != -1)
+                            {
+                                allUserProducts[index] = product;
+                            }
+                            break;
+                        case DocumentChange.Type.Removed:
+                            allUserProducts.RemoveAll(p => p.productId == product.productId);
+                            break;
+                    }
+                }
+                // Khi dữ liệu sản phẩm thay đổi, có thể cần cập nhật lại thông tin sản phẩm đang hiển thị
+                // Ví dụ: Nếu một sản phẩm đang được chọn và tồn kho thay đổi, hiển thị cập nhật đó.
+                // Đối với Sales Scene, chúng ta thường chỉ cần cache để tìm kiếm.
+                Debug.Log($"SalesManager: allUserProducts hiện có {allUserProducts.Count} sản phẩm.");
+            });
+        });
     }
 
     // --- Customer Management ---
 
     private void OnCustomerPhoneEndEdit(string phone)
     {
-        // Chỉ tra cứu khi người dùng ngừng nhập (ấn Enter hoặc click ra ngoài)
         OnLookupCustomerButtonClicked();
     }
 
@@ -167,49 +206,40 @@ public class SalesManager : MonoBehaviour
         string phone = customerPhoneInputField.text.Trim();
         if (string.IsNullOrEmpty(phone))
         {
-            ClearCustomerInfo(); // Nếu số điện thoại trống, reset
+            ClearCustomerInfo();
             customerLookupStatusText.text = "Vui lòng nhập số điện thoại khách hàng.";
             return;
         }
 
         customerLookupStatusText.text = "Đang tra cứu khách hàng...";
-        // Tạm thời disable các trường khác trong khi tra cứu
-        SetCustomerInputFieldsInteractable(false);
+        SetCustomerInputFieldsInteractable(false); // Tạm thời disable các trường khác
 
         try
         {
-            // Tra cứu khách hàng theo số điện thoại
-            // Firestore không có khả năng query trực tiếp bằng Document ID trừ khi bạn đặt ID là số điện thoại
-            // Nếu Document ID của khách hàng không phải là số điện thoại, bạn phải query theo trường "phone"
             QuerySnapshot querySnapshot = await userCustomersCollection.WhereEqualTo("phone", phone).Limit(1).GetSnapshotAsync();
 
             if (querySnapshot.Count > 0)
             {
                 DocumentSnapshot doc = querySnapshot.Documents[0];
                 currentCustomer = doc.ConvertTo<CustomerData>();
-                currentCustomer.customerId = doc.Id; // Gán ID của document
-                
+                currentCustomer.customerId = doc.Id;
+
                 customerNameInputField.text = currentCustomer.name;
                 customerAddressInputField.text = currentCustomer.address;
-                customerTaxIdInputField.text = currentCustomer.taxId; // Điền mã số thuế
-                
-                // Sau khi điền, đặt các trường này thành không tương tác (chỉ đọc)
-                SetCustomerInputFieldsInteractable(false);
+                customerTaxIdInputField.text = currentCustomer.taxId;
+
+                SetCustomerInputFieldsInteractable(false); // Đặt các trường này thành không tương tác (chỉ đọc)
                 customerLookupStatusText.text = $"Đã tìm thấy khách hàng: {currentCustomer.name}.";
-                Debug.Log($"Tìm thấy khách hàng: {currentCustomer.name}");
             }
             else
             {
-                // Nếu không tìm thấy, chuẩn bị cho khách hàng mới
-                currentCustomer = new CustomerData { phone = phone }; // Pre-fill số điện thoại
+                currentCustomer = new CustomerData { phone = phone };
                 customerNameInputField.text = "";
                 customerAddressInputField.text = "";
-                customerTaxIdInputField.text = ""; // Xóa mã số thuế
+                customerTaxIdInputField.text = "";
 
-                // Cho phép nhập thông tin khách hàng mới
-                SetCustomerInputFieldsInteractable(true);
+                SetCustomerInputFieldsInteractable(true); // Cho phép nhập thông tin khách hàng mới
                 customerLookupStatusText.text = "Không tìm thấy khách hàng. Vui lòng nhập thông tin mới.";
-                Debug.Log("Không tìm thấy khách hàng. Cho phép nhập mới.");
             }
         }
         catch (Exception e)
@@ -220,23 +250,17 @@ public class SalesManager : MonoBehaviour
         }
         finally
         {
-            // Số điện thoại input field luôn cho phép tương tác
-            customerPhoneInputField.interactable = true; 
+            customerPhoneInputField.interactable = true;
         }
     }
 
     private void SetCustomerInputFieldsInteractable(bool interactable)
     {
-        // Số điện thoại luôn cho phép nhập
-        // customerPhoneInputField.interactable = true; 
-
-        // Các trường còn lại sẽ được bật/tắt tương tác
         if (customerNameInputField != null) customerNameInputField.interactable = interactable;
         if (customerAddressInputField != null) customerAddressInputField.interactable = interactable;
         if (customerTaxIdInputField != null) customerTaxIdInputField.interactable = interactable;
 
-        // Tùy chọn: Thay đổi màu nền hoặc màu chữ để biểu thị trạng thái chỉ đọc
-        Color readOnlyColor = new Color(0.9f, 0.9f, 0.9f, 0.7f); // Màu xám nhạt và hơi trong suốt
+        Color readOnlyColor = new Color(0.9f, 0.9f, 0.9f, 0.7f);
         Color editableColor = Color.white;
 
         if (customerNameInputField != null && customerNameInputField.targetGraphic != null)
@@ -254,7 +278,7 @@ public class SalesManager : MonoBehaviour
         customerNameInputField.text = "";
         customerAddressInputField.text = "";
         customerTaxIdInputField.text = "";
-        SetCustomerInputFieldsInteractable(true); // Bật lại để nhập khách hàng mới
+        SetCustomerInputFieldsInteractable(true);
         customerLookupStatusText.text = "";
         Debug.Log("Đã xóa thông tin khách hàng hiện tại.");
     }
@@ -268,7 +292,6 @@ public class SalesManager : MonoBehaviour
             return;
         }
 
-        // Tìm sản phẩm theo barcode hoặc tên
         ProductData foundProduct = allUserProducts.FirstOrDefault(p =>
             p.barcode.Equals(searchText.Trim(), StringComparison.OrdinalIgnoreCase) ||
             p.productName.IndexOf(searchText.Trim(), StringComparison.OrdinalIgnoreCase) >= 0);
@@ -286,7 +309,7 @@ public class SalesManager : MonoBehaviour
         }
     }
 
-    private ProductData selectedProductForCart; // Sản phẩm đang được chọn để thêm vào giỏ
+    private ProductData selectedProductForCart;
     private void ShowProductSelection(ProductData product)
     {
         selectedProductForCart = product;
@@ -295,9 +318,8 @@ public class SalesManager : MonoBehaviour
         if (selectedProductNameText != null) selectedProductNameText.text = product.productName;
         if (selectedProductStockText != null) selectedProductStockText.text = $"Tồn kho: {product.stock}";
         if (selectedProductPriceText != null) selectedProductPriceText.text = $"Giá: {product.price:N0} VNĐ";
-        if (quantityToCartInputField != null) quantityToCartInputField.text = "1"; // Mặc định số lượng là 1
-        
-        // Nút "Thêm vào giỏ" chỉ tương tác được nếu tồn kho > 0
+        if (quantityToCartInputField != null) quantityToCartInputField.text = "1";
+
         if (addToCartButton != null) addToCartButton.interactable = product.stock > 0;
     }
 
@@ -316,11 +338,9 @@ public class SalesManager : MonoBehaviour
         if (!long.TryParse(quantityToCartInputField.text, out quantityToAdd) || quantityToAdd <= 0)
         {
             Debug.LogWarning("Số lượng thêm vào giỏ không hợp lệ.");
-            // Có thể hiển thị thông báo lỗi trên UI
             return;
         }
 
-        // Kiểm tra tồn kho trước khi thêm vào giỏ
         ProductData actualInventoryProduct = allUserProducts.FirstOrDefault(p => p.productId == selectedProductForCart.productId);
         if (actualInventoryProduct == null)
         {
@@ -334,25 +354,22 @@ public class SalesManager : MonoBehaviour
         if (totalRequestedQuantity > actualInventoryProduct.stock)
         {
             Debug.LogWarning($"Không đủ hàng trong kho cho {selectedProductForCart.productName}. Tồn kho: {actualInventoryProduct.stock}. Giỏ đã có: {currentQuantityInCart}. Yêu cầu thêm: {quantityToAdd}.");
-            // Hiển thị thông báo lỗi trên UI
             return;
         }
 
-        // Thêm/Cập nhật sản phẩm trong giỏ hàng
         if (productsInCart.ContainsKey(selectedProductForCart.productId))
         {
-            productsInCart[selectedProductForCart.productId].stock += quantityToAdd; // 'stock' của ProductData dùng để lưu số lượng trong giỏ
+            productsInCart[selectedProductForCart.productId].stock += quantityToAdd;
         }
         else
         {
-            // Tạo một bản sao mới của ProductData để lưu vào giỏ hàng, tránh ảnh hưởng đến dữ liệu kho gốc
             ProductData newCartItem = new ProductData
             {
                 productId = selectedProductForCart.productId,
                 productName = selectedProductForCart.productName,
                 unit = selectedProductForCart.unit,
                 price = selectedProductForCart.price,
-                stock = quantityToAdd // Số lượng trong giỏ
+                stock = quantityToAdd
             };
             productsInCart.Add(newCartItem.productId, newCartItem);
         }
@@ -364,17 +381,15 @@ public class SalesManager : MonoBehaviour
     // --- Cart Management ---
     private void UpdateCartUI()
     {
-        // Xóa tất cả các item giỏ hàng cũ
         foreach (Transform child in cartItemsParent.transform)
         {
             Destroy(child.gameObject);
         }
         cartItemUIObjects.Clear();
 
-        // Instantiate các item giỏ hàng mới
         if (productsInCart.Count > 0)
         {
-            if (cartEmptyPromptPanel != null) cartEmptyPromptPanel.SetActive(false); // Ẩn thông báo giỏ trống
+            if (cartEmptyPromptPanel != null) cartEmptyPromptPanel.SetActive(false);
             foreach (var kvp in productsInCart)
             {
                 ProductData cartItemData = kvp.Value;
@@ -383,7 +398,6 @@ public class SalesManager : MonoBehaviour
                 if (uiItem != null)
                 {
                     uiItem.SetCartItemData(cartItemData);
-                    // Đăng ký các sự kiện để SalesManager có thể lắng nghe thay đổi từ CartItemUI
                     uiItem.OnQuantityChanged.AddListener(HandleCartItemQuantityChanged);
                     uiItem.OnRemovedFromCart.AddListener(HandleRemoveCartItem);
                     cartItemUIObjects.Add(cartItemData.productId, cartItemGO);
@@ -396,7 +410,7 @@ public class SalesManager : MonoBehaviour
         }
         else
         {
-            if (cartEmptyPromptPanel != null) cartEmptyPromptPanel.SetActive(true); // Hiển thị thông báo giỏ trống
+            if (cartEmptyPromptPanel != null) cartEmptyPromptPanel.SetActive(true);
         }
 
         UpdateCartSummaryUI();
@@ -409,26 +423,24 @@ public class SalesManager : MonoBehaviour
             ProductData cartItem = productsInCart[productId];
             ProductData inventoryProduct = allUserProducts.FirstOrDefault(p => p.productId == productId);
 
-            // Kiểm tra lại tồn kho khi số lượng trong giỏ thay đổi
             if (inventoryProduct != null && newQuantity > inventoryProduct.stock)
             {
                 Debug.LogWarning($"Số lượng trong giỏ của {cartItem.productName} ({newQuantity}) không thể vượt quá tồn kho hiện có ({inventoryProduct.stock}).");
-                // Reset UI của item đó về số lượng tối đa cho phép hoặc số lượng trước đó
                 if (cartItemUIObjects.ContainsKey(productId))
                 {
-                    cartItemUIObjects[productId].GetComponent<CartItemUI>().SetCartItemData(cartItem); // Revert UI
+                    cartItemUIObjects[productId].GetComponent<CartItemUI>().SetCartItemData(cartItem);
                 }
                 return;
             }
-            
-            cartItem.stock = newQuantity; // Cập nhật số lượng trong giỏ
-            if (newQuantity <= 0) // Nếu số lượng về 0, xóa khỏi giỏ
+
+            cartItem.stock = newQuantity;
+            if (newQuantity <= 0)
             {
                 HandleRemoveCartItem(productId);
             }
             else
             {
-                UpdateCartSummaryUI(); // Tính toán lại tổng tiền
+                UpdateCartSummaryUI();
             }
         }
     }
@@ -443,7 +455,7 @@ public class SalesManager : MonoBehaviour
                 Destroy(cartItemUIObjects[productId]);
                 cartItemUIObjects.Remove(productId);
             }
-            UpdateCartUI(); // Cập nhật lại UI giỏ hàng
+            UpdateCartUI();
         }
     }
 
@@ -462,7 +474,6 @@ public class SalesManager : MonoBehaviour
         if (taxText != null) taxText.text = $"Thuế ({TAX_RATE * 100}%): {currentTax:N0} VNĐ";
         if (grandTotalText != null) grandTotalText.text = $"Tổng cộng: {currentGrandTotal:N0} VNĐ";
 
-        // Enable/disable complete sale button
         if (completeSaleButton != null)
         {
             completeSaleButton.interactable = productsInCart.Count > 0;
@@ -483,7 +494,6 @@ public class SalesManager : MonoBehaviour
             return;
         }
 
-        // --- Bước 1: Xác nhận và lưu thông tin khách hàng ---
         string finalCustomerPhone = customerPhoneInputField.text.Trim();
         string finalCustomerName = customerNameInputField.text.Trim();
         string finalCustomerAddress = customerAddressInputField.text.Trim();
@@ -494,13 +504,12 @@ public class SalesManager : MonoBehaviour
             customerLookupStatusText.text = "Vui lòng nhập số điện thoại khách hàng.";
             return;
         }
-        if (string.IsNullOrEmpty(finalCustomerName) && customerNameInputField.interactable) // Nếu đang ở chế độ nhập mới, tên không được trống
+        if (string.IsNullOrEmpty(finalCustomerName) && customerNameInputField.interactable)
         {
             customerLookupStatusText.text = "Vui lòng nhập tên khách hàng.";
             return;
         }
 
-        // Nếu đây là khách hàng mới (customerId là null hoặc rỗng)
         if (currentCustomer == null || string.IsNullOrEmpty(currentCustomer.customerId))
         {
             currentCustomer = new CustomerData
@@ -513,7 +522,6 @@ public class SalesManager : MonoBehaviour
 
             try
             {
-                // Thêm khách hàng mới vào Firestore và lấy ID
                 DocumentReference newCustomerDocRef = await userCustomersCollection.AddAsync(currentCustomer);
                 currentCustomer.customerId = newCustomerDocRef.Id;
                 Debug.Log($"Đã lưu khách hàng mới: {currentCustomer.name} (ID: {currentCustomer.customerId})");
@@ -522,18 +530,10 @@ public class SalesManager : MonoBehaviour
             {
                 Debug.LogError($"Lỗi khi lưu khách hàng mới: {e.Message}");
                 customerLookupStatusText.text = $"Lỗi khi lưu khách hàng: {e.Message}";
-                // Quyết định có nên dừng giao dịch nếu không lưu được khách hàng hay không. Tùy thuộc vào yêu cầu.
-                // Ở đây, ta vẫn tiếp tục để hoàn tất đơn hàng, nhưng khách hàng có thể không được lưu trữ.
             }
         }
-        else // Đây là khách hàng hiện có, có thể cập nhật nếu có thay đổi (chức năng edit customer sau này)
-        {
-            // Hiện tại, chúng ta không cho phép sửa thông tin khách hàng cũ qua giao diện này
-            // Nếu bạn muốn cho phép sửa, bạn sẽ cần thêm logic update ở đây
-        }
 
 
-        // --- Bước 2: Chuẩn bị và lưu bản ghi đơn hàng ---
         List<SaleItem> saleItems = new List<SaleItem>();
         foreach (var productInCart in productsInCart.Values)
         {
@@ -542,19 +542,18 @@ public class SalesManager : MonoBehaviour
                 productId = productInCart.productId,
                 productName = productInCart.productName,
                 unit = productInCart.unit,
-                quantity = productInCart.stock, // stock ở đây là số lượng bán
-                priceAtSale = productInCart.price // Giá tại thời điểm bán
+                quantity = productInCart.stock,
+                priceAtSale = productInCart.price
             });
         }
 
-        // Tính toán lại tổng tiền cuối cùng trước khi lưu
         long finalSubtotal = productsInCart.Values.Sum(p => p.price * p.stock);
         long finalTax = (long)(finalSubtotal * TAX_RATE);
         long finalGrandTotal = finalSubtotal + finalTax;
 
         SaleData newSale = new SaleData
         {
-            customerId = currentCustomer?.customerId, // Có thể là null nếu không lưu được khách hàng
+            customerId = currentCustomer?.customerId,
             customerName = currentCustomer?.name,
             customerPhone = currentCustomer?.phone,
             totalAmount = finalGrandTotal,
@@ -564,53 +563,31 @@ public class SalesManager : MonoBehaviour
             items = saleItems
         };
 
-        // Tạm thời vô hiệu hóa các nút
         completeSaleButton.interactable = false;
         cancelSaleButton.interactable = false;
         customerLookupStatusText.text = "Đang hoàn tất đơn hàng...";
 
         try
         {
-            // Lưu bản ghi đơn hàng vào Firestore
             await userSalesCollection.AddAsync(newSale);
             Debug.Log("Đã lưu đơn hàng thành công.");
 
-            // --- Bước 3: Cập nhật tồn kho (Giảm số lượng sản phẩm đã bán) ---
             WriteBatch batch = db.StartBatch();
             foreach (var cartProduct in productsInCart.Values)
             {
                 DocumentReference productDocRef = userProductsCollection.Document(cartProduct.productId);
-                
-                // Firestore Transaction/Batch Update
-                // Lấy snapshot để kiểm tra tồn kho hiện tại và đảm bảo không bị lỗi concurrency nếu có nhiều giao dịch
-                DocumentSnapshot productSnap = await productDocRef.GetSnapshotAsync();
-                if (productSnap.Exists)
-                {
-                    ProductData currentInventoryProduct = productSnap.ConvertTo<ProductData>();
-                    long newStock = currentInventoryProduct.stock - cartProduct.stock; // cartProduct.stock là số lượng bán
 
-                    if (newStock < 0)
-                    {
-                        Debug.LogError($"Cảnh báo: Tồn kho của {currentInventoryProduct.productName} bị âm sau giao dịch. Đã bán {cartProduct.stock}, Tồn kho ban đầu {currentInventoryProduct.stock}. Sẽ đặt về 0.");
-                        newStock = 0; // Đảm bảo tồn kho không bị âm trong DB
-                    }
-
-                    batch.Update(productDocRef, "stock", newStock);
-                }
-                else
-                {
-                    Debug.LogWarning($"Sản phẩm '{cartProduct.productName}' (ID: {cartProduct.productId}) không tồn tại trong kho để cập nhật.");
-                }
+                // Quan trọng: Sử dụng `update` để chỉ sửa `stock` và tránh ghi đè toàn bộ document.
+                // Firebase tự động sẽ kiểm tra tài liệu có tồn tại không.
+                batch.Update(productDocRef, "stock", FieldValue.Increment(-cartProduct.stock));
             }
             await batch.CommitAsync();
             Debug.Log("Đã cập nhật tồn kho thành công.");
 
-            // --- Hoàn tất giao dịch ---
             customerLookupStatusText.text = "Đơn hàng đã hoàn tất!";
             Debug.Log("Đơn hàng đã hoàn tất thành công!");
-            OnCancelSaleButtonClicked(); // Reset UI cho đơn hàng mới
-            LoadAllInventoryProducts(); // Tải lại kho hàng để cập nhật tồn kho hiển thị (đảm bảo dữ liệu mới nhất)
-
+            OnCancelSaleButtonClicked();
+            // Không cần LoadAllInventoryProducts() nữa vì listener đã xử lý cập nhật local cache.
         }
         catch (Exception e)
         {
@@ -628,27 +605,22 @@ public class SalesManager : MonoBehaviour
     {
         productsInCart.Clear();
         cartItemUIObjects.Clear();
-        UpdateCartUI(); // Xóa UI giỏ hàng và hiển thị thông báo trống
+        UpdateCartUI();
 
-        ClearCustomerInfo(); // Xóa thông tin khách hàng
+        ClearCustomerInfo();
 
-        ClearProductSelection(); // Xóa sản phẩm đang chọn để thêm vào giỏ
-        productSearchInputField.text = ""; // Xóa nội dung tìm kiếm
+        ClearProductSelection();
+        productSearchInputField.text = "";
         Debug.Log("Đã hủy đơn hàng và reset.");
     }
 
     private void OnExportInvoiceButtonClicked()
     {
         Debug.Log("Nút 'Xuất hóa đơn' được nhấn. Chức năng sẽ được phát triển sau.");
-        // TODO: Triển khai chức năng xuất hóa đơn (ví dụ: tạo PDF)
     }
 
     private void OnBackToInventoryButtonClicked()
     {
-        SceneManager.LoadScene("Inventory"); // Đảm bảo Scene "Inventory" đã được thêm vào Build Settings
+        SceneManager.LoadScene("Inventory");
     }
 }
-
-
-
-
