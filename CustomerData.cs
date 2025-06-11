@@ -1,4 +1,3 @@
-// File: CustomerData.cs
 using Firebase.Firestore;
 using System;
 
@@ -6,8 +5,9 @@ using System;
 [Serializable]
 public class CustomerData
 {
-    // Firestore Document ID cho khách hàng
-    [FirestoreProperty(ExcludeFromConversion = true)]
+    // Trường này dùng để lưu trữ Document ID của khách hàng từ Firestore.
+    // KHÔNG gắn [FirestoreProperty] vì đây không phải là một trường dữ liệu trong document Firestore.
+    // Document ID được quản lý bởi Firestore và được truy cập thông qua DocumentSnapshot.Id.
     public string customerId { get; set; }
 
     [FirestoreProperty("phone")]
@@ -23,5 +23,6 @@ public class CustomerData
     [FirestoreProperty("taxId")]
     public string taxId { get; set; }
 
+    // Constructor mặc định cần thiết cho Firestore để deserialize dữ liệu
     public CustomerData() { }
 }
