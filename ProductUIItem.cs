@@ -1,10 +1,8 @@
-// File: ProductUIItem.cs
 using UnityEngine;
-using TMPro;
-using UnityEngine.UI;
-using System.Collections;
-using UnityEngine.Networking;
-using UnityEngine.Events; // Quan trọng: Thêm thư viện này cho UnityEvent
+using TMPro; // Sử dụng cho TextMeshPro
+using UnityEngine.UI; // Sử dụng cho Image và Button
+using System.Collections; // Dành cho Coroutine nếu tải ảnh
+using UnityEngine.Events; // Quan trọng: Thêm namespace này cho UnityEvent
 
 public class ProductUIItem : MonoBehaviour
 {
@@ -15,21 +13,39 @@ public class ProductUIItem : MonoBehaviour
     public TMP_Text categoryText;
     public Image productImage; // Kéo component Image vào đây (tùy chọn)
 
-    // Thêm các TMP_Text khác nếu cần:
+    // Các TMP_Text khác nếu cần:
     // public TMP_Text barcodeText;
     // public TMP_Text manufacturerText;
     // public TMP_Text importPriceText;
 
-    public TMP_Text stockText; // Hiển thị số lượng tồn kho
+    // Thêm Button Edit
+    [Header("Interaction Buttons")]
+    public Button editButton; // Kéo Button component của nút Edit vào đây trong Inspector
 
-    // Thêm Button nhập kho
-    public Button importButton; // Kéo Button "Nhập Kho" vào đây trong Inspector
-
-    // Event sẽ được Invoke khi nút nhập kho được click
-    // Nó sẽ truyền dữ liệu của sản phẩm này cho InventoryManager
-    public UnityEvent<ProductData> OnImportRequested = new UnityEvent<ProductData>(); 
+    // Định nghĩa một UnityEvent để gửi dữ liệu sản phẩm khi nút Edit được nhấn
+    // InventoryManager sẽ đăng ký lắng nghe sự kiện này
+    public UnityEvent<ProductData> OnEditActionRequested; 
 
     private ProductData currentProductData; // Lưu trữ dữ liệu sản phẩm của item này
+
+    void Awake()
+    {
+        // Khởi tạo UnityEvent nếu nó chưa được khởi tạo
+        if (OnEditActionRequested == null)
+        {
+            OnEditActionRequested = new UnityEvent<ProductData>();
+        }
+
+        // Gán hàm xử lý sự kiện cho nút Edit
+        if (editButton != null)
+        {
+            editButton.onClick.AddListener(OnEditButtonClicked);
+        }
+        else
+        {
+            Debug.LogWarning("Nút 'Edit Button' chưa được gán trong ProductUIItem. Vui lòng kéo Button vào trường 'Edit Button' trong Inspector.");
+        }
+    }
 
     public void SetProductData(ProductData product)
     {
@@ -39,24 +55,8 @@ public class ProductUIItem : MonoBehaviour
         if (unitText != null) unitText.text = product.unit;
         if (priceText != null) priceText.text = $"{product.price:N0} VNĐ"; // Định dạng tiền tệ
         if (categoryText != null) categoryText.text = product.category;
-        if (stockText != null) stockText.text = $"Tồn kho: {product.stock}"; // Cập nhật hiển thị tồn kho
-
-        // Gán sự kiện click cho nút nhập kho
-        if (importButton != null)
-        {
-            // Xóa tất cả các listener cũ để tránh việc lắng nghe nhiều lần
-            // Điều này quan trọng nếu SetProductData có thể được gọi nhiều lần trên cùng một instance của ProductUIItem
-            importButton.onClick.RemoveAllListeners();
-            // Thêm listener mới, khi click sẽ Invoke event OnImportRequested và truyền currentProductData
-            importButton.onClick.AddListener(() => OnImportRequested.Invoke(currentProductData));
-        }
-        else
-        {
-            Debug.LogWarning("Import Button chưa được gán vào ProductUIItem trong Inspector.");
-        }
 
         // TODO: Tải ảnh từ URL (sẽ cần thư viện ngoài hoặc UnityWebRequest)
-        // Đây là phần comment để bạn tự xử lý nếu muốn tải ảnh động
         // if (productImage != null && !string.IsNullOrEmpty(product.imageUrl))
         // {
         //     StartCoroutine(LoadImage(product.imageUrl));
@@ -68,18 +68,25 @@ public class ProductUIItem : MonoBehaviour
 
         // Cập nhật các text khác nếu có
         // if (barcodeText != null) barcodeText.text = product.barcode;
-        // if (manufacturerText != null) manufacturerText.text = product.manufacturer;
-        // if (importPriceText != null) importPriceText.text = $"{product.importPrice:N0} VNĐ";
+        // ...
+    }
+
+    // Phương thức này sẽ được gọi khi nút Edit trên item UI được nhấn
+    public void OnEditButtonClicked()
+    {
+        Debug.Log($"Nút chỉnh sửa đã được nhấn cho sản phẩm: {currentProductData.productName}");
+        // Kích hoạt sự kiện và truyền dữ liệu sản phẩm hiện tại
+        OnEditActionRequested?.Invoke(currentProductData);
     }
 
     // Tùy chọn: Hàm tải ảnh từ URL (cần using UnityEngine.Networking;)
     // private IEnumerator LoadImage(string url)
     // {
-    //     using (UnityWebRequest request = UnityWebRequestTexture.GetTexture(url))
+    //     using (UnityEngine.Networking.UnityWebRequest request = UnityEngine.Networking.UnityWebRequestTexture.GetTexture(url))
     //     {
     //         yield return request.SendWebRequest();
 
-    //         if (request.result == UnityWebRequest.Result.Success)
+    //         if (request.result == UnityEngine.Networking.UnityWebRequest.Result.Success)
     //         {
     //             Texture2D texture = DownloadHandlerTexture.GetContent(request);
     //             productImage.sprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), new Vector2(0.5f, 0.5f));
@@ -89,13 +96,5 @@ public class ProductUIItem : MonoBehaviour
     //             Debug.LogError($"Failed to load image from {url}: {request.error}");
     //         }
     //     }
-    // }
-
-    // Bạn có thể thêm các hàm khác ở đây, ví dụ cho nút "Sửa" hoặc "Xóa"
-    // public void OnEditButtonClicked() {
-    //     // Logic để mở panel chỉnh sửa
-    // }
-    // public void OnDeleteButtonClicked() {
-    //     // Logic để xác nhận và xóa sản phẩm
     // }
 }
