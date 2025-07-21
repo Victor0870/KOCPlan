@@ -1,277 +1,169 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="vi">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BizMate App - Firebase Tester</title>
-    
-    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-    
+    <title>ILV production</title>
     <style>
         body {
             font-family: Arial, sans-serif;
             display: flex;
-            flex-direction: column; /* Để căn giữa theo chiều dọc nếu có scroll */
             justify-content: center;
             align-items: center;
             min-height: 100vh;
-            background-color: #f0f2f5;
+            background-color: #f4f4f4;
             margin: 0;
-            padding: 20px;
-            box-sizing: border-box;
         }
-        .login-container, .main-content-container {
-            background-color: #ffffff;
+        .container {
+            background-color: #fff;
             padding: 30px;
             border-radius: 8px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            text-align: center;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
             width: 100%;
-            max-width: 500px;
-            margin: 10px 0; /* Khoảng cách giữa các container nếu nhiều */
+            max-width: 400px;
+            text-align: center;
         }
-        .login-container h1, .main-content-container h1, .main-content-container h2 {
-            color: #333;
-            margin-bottom: 20px;
+        .input-group {
+            margin-bottom: 15px;
+            text-align: left;
         }
-        input, button {
+        .input-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        .input-group input[type="text"],
+        .input-group input[type="password"] {
             width: calc(100% - 20px);
             padding: 10px;
-            margin-bottom: 15px;
             border: 1px solid #ddd;
             border-radius: 4px;
-            box-sizing: border-box; /* Đảm bảo padding không làm tăng width */
+            font-size: 16px;
         }
         button {
             background-color: #007bff;
             color: white;
+            padding: 10px 20px;
             border: none;
+            border-radius: 4px;
             cursor: pointer;
             font-size: 16px;
+            margin-top: 10px;
         }
         button:hover {
             background-color: #0056b3;
         }
-        .error-message {
-            color: red;
-            margin-top: 10px;
-        }
-        #main-content {
-            display: none; /* Mặc định ẩn nội dung chính */
-            padding: 20px;
-            text-align: center;
-        }
-        #firebaseOutput {
-            border: 1px solid #ccc;
-            padding: 10px;
-            min-height: 100px;
-            max-height: 300px; /* Giới hạn chiều cao để tránh quá dài */
-            overflow-y: scroll;
-            margin-top: 20px;
+        #secondScreen {
+            display: none; /* Mặc định ẩn giao diện thứ 2 */
             text-align: left;
+        }
+        .checkbox-group {
+            margin-top: 20px;
+            margin-bottom: 15px;
+        }
+        .checkbox-group label {
+            margin-right: 15px;
+        }
+        #notOkDescription {
+            width: calc(100% - 20px);
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+            margin-top: 10px;
+            display: none; /* Mặc định ẩn */
         }
     </style>
 </head>
 <body>
+    <div class="container">
+        <div id="firstScreen">
+            <h2>Đăng nhập</h2>
+            <div class="input-group">
+                <label for="employeeCode">Mã nhân viên:</label>
+                <input type="text" id="employeeCode" name="employeeCode">
+            </div>
+            <div class="input-group">
+                <label for="password">Mật khẩu:</label>
+                <input type="password" id="password" name="password">
+            </div>
+            <button onclick="accessPage()">Truy cập</button>
+        </div>
 
-    <div class="login-container" id="access-gate">
-        <h1>Private Access</h1>
-        <input type="password" id="accessPassword" placeholder="Enter password">
-        <button id="accessButton">Enter</button>
-        <p class="error-message" id="errorMessage"></p>
-    </div>
-
-    <div class="main-content-container" id="main-content">
-        <h1>Welcome to BizMate Firebase Tester</h1>
-        <p>You have successfully bypassed the access gate. Now you can log in to Firebase.</p>
-
-        <h2>Firebase Authentication</h2>
-        <input type="email" id="firebaseEmail" placeholder="Firebase Email">
-        <input type="password" id="firebasePassword" placeholder="Firebase Password">
-        <button id="firebaseSignUpBtn">Firebase Sign Up</button>
-        <button id="firebaseSignInBtn">Firebase Sign In</button>
-        <button id="firebaseSignOutBtn">Firebase Sign Out</button>
-        <p>Current Firebase User: <span id="firebaseCurrentUser">None</span></p>
-
-        <h2>Firestore Operations (userProducts)</h2>
-        <input type="text" id="firebaseProductName" placeholder="Product Name">
-        <input type="number" id="firebaseProductPrice" placeholder="Price">
-        <input type="number" id="firebaseProductQuantity" placeholder="Quantity">
-        <button id="firebaseAddProductBtn">Add New Independent Product</button>
-        <button id="firebaseGetProductsBtn">Get My Products</button>
-
-        <div id="firebaseOutput"></div>
-
+        <div id="secondScreen">
+            <button onclick="viewList()">Xem danh sách</button>
+            <p><strong>Cập nhật tình trạng của bạn:</strong></p>
+            <div class="checkbox-group">
+                <label>
+                    <input type="checkbox" id="statusOk" name="status" value="ok" onchange="toggleDescription()"> OK
+                </label>
+                <label>
+                    <input type="checkbox" id="statusNotOk" name="status" value="not_ok" onchange="toggleDescription()"> Không OK
+                </label>
+            </div>
+            <div id="notOkInputGroup" style="display: none;">
+                <label for="notOkDescription">Nếu không OK hãy mô tả ngắn gọn:</label>
+                <input type="text" id="notOkDescription" name="notOkDescription">
+            </div>
+            <button onclick="confirmStatus()">Xác nhận</button>
+        </div>
     </div>
 
     <script>
-        // Mật khẩu cứng - KHÔNG AN TOÀN cho production
-        const ACCESS_PASSWORD = "hahahihi"; // MẬT KHẨU ĐẦU TIÊN CỦA BẠN
+        const defaultPassword = "ilvprd";
 
-        const accessPasswordInput = document.getElementById('accessPassword');
-        const accessButton = document.getElementById('accessButton');
-        const errorMessage = document.getElementById('errorMessage');
-        const accessGate = document.getElementById('access-gate');
-        const mainContent = document.getElementById('main-content');
+        function accessPage() {
+            const employeeCode = document.getElementById('employeeCode').value;
+            const password = document.getElementById('password').value;
 
-        accessButton.addEventListener('click', () => {
-            if (accessPasswordInput.value === ACCESS_PASSWORD) {
-                accessGate.style.display = 'none';
-                mainContent.style.display = 'block';
-                errorMessage.textContent = '';
-                initializeFirebaseTester(); // Gọi hàm khởi tạo Firebase Tester
+            if (password === defaultPassword) {
+                document.getElementById('firstScreen').style.display = 'none';
+                document.getElementById('secondScreen').style.display = 'block';
             } else {
-                errorMessage.textContent = 'Incorrect password. Please try again.';
+                alert('Mật khẩu không đúng. Vui lòng thử lại!');
             }
-        });
+        }
 
-        accessPasswordInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                accessButton.click();
+        function viewList() {
+            alert('Chức năng "Xem danh sách" sẽ được phát triển sau!');
+            // Tại đây bạn có thể chuyển hướng đến trang danh sách hoặc hiển thị danh sách
+        }
+
+        function toggleDescription() {
+            const statusOk = document.getElementById('statusOk');
+            const statusNotOk = document.getElementById('statusNotOk');
+            const notOkInputGroup = document.getElementById('notOkInputGroup');
+
+            if (statusOk.checked) {
+                statusNotOk.checked = false; // Đảm bảo chỉ một lựa chọn được chọn
+                notOkInputGroup.style.display = 'none';
+                document.getElementById('notOkDescription').value = ''; // Xóa nội dung nếu đã nhập
+            } else if (statusNotOk.checked) {
+                statusOk.checked = false; // Đảm bảo chỉ một lựa chọn được chọn
+                notOkInputGroup.style.display = 'block';
+            } else {
+                notOkInputGroup.style.display = 'none';
+                document.getElementById('notOkDescription').value = '';
             }
-        });
+        }
 
-        // Hàm khởi tạo Firebase Tester
-        function initializeFirebaseTester() {
-            // Cấu hình Firebase của bạn - ĐÃ ĐƯỢC ĐIỀN TỪ HÌNH ẢNH CỦA BẠN
-            const firebaseConfig = {
-  apiKey: "AIzaSyB3poeFCUsilXzqAyXzXFEDbK6LOPlJ6WA",
-  authDomain: "bizmate-1e317.firebaseapp.com",
-  projectId: "bizmate-1e317",
-  storageBucket: "bizmate-1e317.firebasestorage.app",
-  messagingSenderId: "924296680961",
-  appId: "1:924296680961:web:214b1537a63cb8187c5200",
-  measurementId: "G-LDLDL92GXJ59"
-};
+        function confirmStatus() {
+            const statusOk = document.getElementById('statusOk').checked;
+            const statusNotOk = document.getElementById('statusNotOk').checked;
+            const notOkDescription = document.getElementById('notOkDescription').value;
 
-
-            // Khởi tạo Firebase
-            firebase.initializeApp(firebaseConfig);
-
-            const auth = firebase.auth();
-            const db = firebase.firestore();
-
-            const firebaseEmailInput = document.getElementById('firebaseEmail');
-            const firebasePasswordInput = document.getElementById('firebasePassword');
-            const firebaseCurrentUserSpan = document.getElementById('firebaseCurrentUser');
-            const firebaseOutputDiv = document.getElementById('firebaseOutput');
-
-            // Auth Listeners
-            auth.onAuthStateChanged(user => {
-                if (user) {
-                    firebaseCurrentUserSpan.textContent = user.email + " (UID: " + user.uid + ")";
+            if (statusOk) {
+                alert('Bạn đã xác nhận tình trạng: OK');
+            } else if (statusNotOk) {
+                if (notOkDescription.trim() === '') {
+                    alert('Vui lòng mô tả ngắn gọn nếu tình trạng không OK.');
                 } else {
-                    firebaseCurrentUserSpan.textContent = "None";
+                    alert('Bạn đã xác nhận tình trạng: Không OK. Mô tả: ' + notOkDescription);
                 }
-            });
-
-            // Auth Functions
-            document.getElementById('firebaseSignUpBtn').addEventListener('click', () => {
-                auth.createUserWithEmailAndPassword(firebaseEmailInput.value, firebasePasswordInput.value)
-                    .then(userCredential => {
-                        logToFirebaseOutput("User signed up: " + userCredential.user.email);
-                        // Tạo profile user ban đầu trong Firestore (giống logic Unity)
-                        const userDocRef = db.collection('users').doc(userCredential.user.uid);
-                        userDocRef.set({
-                            email: userCredential.user.email,
-                            name: userCredential.user.email.split('@')[0],
-                            createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                        }).then(() => logToFirebaseOutput("User profile created in Firestore."));
-                    })
-                    .catch(error => logToFirebaseOutput("Sign Up Error: " + error.message));
-            });
-
-            document.getElementById('firebaseSignInBtn').addEventListener('click', () => {
-                auth.signInWithEmailAndPassword(firebaseEmailInput.value, firebasePasswordInput.value)
-                    .then(userCredential => {
-                        logToFirebaseOutput("User signed in: " + userCredential.user.email);
-                    })
-                    .catch(error => logToFirebaseOutput("Sign In Error: " + error.message));
-            });
-
-            document.getElementById('firebaseSignOutBtn').addEventListener('click', () => {
-                auth.signOut()
-                    .then(() => logToFirebaseOutput("User signed out."))
-                    .catch(error => logToFirebaseOutput("Sign Out Error: " + error.message));
-            });
-
-            // Firestore Functions
-            document.getElementById('firebaseAddProductBtn').addEventListener('click', async () => {
-                const user = auth.currentUser;
-                if (!user) {
-                    logToFirebaseOutput("Please sign in to add product.");
-                    return;
-                }
-
-                const productName = document.getElementById('firebaseProductName').value;
-                const productPrice = parseFloat(document.getElementById('firebaseProductPrice').value);
-                const productQuantity = parseInt(document.getElementById('firebaseProductQuantity').value);
-
-                if (!productName || isNaN(productPrice) || isNaN(productQuantity)) {
-                    logToFirebaseOutput("Please fill all product fields.");
-                    return;
-                }
-
-                try {
-                    const productData = {
-                        ownerUid: user.uid,
-                        masterProductId: null, // Test sản phẩm độc lập
-                        name: productName,
-                        price: productPrice,
-                        quantity: productQuantity,
-                        description: "Mô tả sản phẩm test từ web", // Thêm các trường khác
-                        category: "Test Category",
-                        imageUrl: "https://via.placeholder.com/150",
-                        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-                    };
-                    const docRef = await db.collection('userProducts').add(productData);
-                    logToFirebaseOutput("Product added with ID: " + docRef.id);
-                } catch (error) {
-                    logToFirebaseOutput("Error adding product: " + error.message);
-                }
-            });
-
-            document.getElementById('firebaseGetProductsBtn').addEventListener('click', async () => {
-                const user = auth.currentUser;
-                if (!user) {
-                    logToFirebaseOutput("Please sign in to get products.");
-                    return;
-                }
-                try {
-                    const snapshot = await db.collection('userProducts')
-                                            .where('ownerUid', '==', user.uid)
-                                            .get();
-                    if (snapshot.empty) {
-                        logToFirebaseOutput("No products found for this user.");
-                        return;
-                    }
-                    let productsHtml = "<h3>Your Products:</h3><ul>";
-                    snapshot.forEach(doc => {
-                        const data = doc.data();
-                        productsHtml += `<li><strong>${data.name}</strong> (ID: ${doc.id}) - Price: ${data.price} - Qty: ${data.quantity}`;
-                        if (data.masterProductId) {
-                            productsHtml += ` (Master Product ID: ${data.masterProductId})`;
-                        } else {
-                            productsHtml += ` (Independent Product)`;
-                        }
-                        productsHtml += `</li>`;
-                    });
-                    productsHtml += "</ul>";
-                    logToFirebaseOutput(productsHtml);
-
-                } catch (error) {
-                    logToFirebaseOutput("Error getting products: " + error.message);
-                }
-            });
-
-            function logToFirebaseOutput(message) {
-                const p = document.createElement('p');
-                p.innerHTML = message;
-                firebaseOutputDiv.prepend(p); // Add to top
+            } else {
+                alert('Vui lòng chọn tình trạng của bạn (OK hoặc Không OK).');
             }
+            // Tại đây bạn có thể gửi dữ liệu này đến server hoặc xử lý tiếp
         }
     </script>
 </body>
