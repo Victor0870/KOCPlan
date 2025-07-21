@@ -135,10 +135,15 @@
             background-color: #f2f2f2;
             font-weight: bold;
         }
+        /* New style for "Không OK" rows */
+        .status-not-ok-row {
+            background-color: #ffe0b2; /* Light orange/peach color */
+        }
         .action-buttons {
             display: flex;
             justify-content: space-around;
-            margin-top: 20px;
+            margin-top: 0px; /* Adjusted margin to place buttons at the top */
+            margin-bottom: 20px; /* Add space below buttons */
         }
         .action-buttons button {
             width: 45%; /* Adjust width for two buttons */
@@ -186,12 +191,12 @@
         </div>
 
         <div id="statusViewScreen"> <!-- New screen for table and navigation -->
-            <div id="memberStatusTableContainer" style="margin-top: 0px; text-align: left;">
-                <!-- Table will be loaded here -->
-            </div>
             <div class="action-buttons">
                 <button onclick="reloadTable()">Tải lại</button>
                 <button onclick="goBackToUpdateStatus()">Quay lại</button>
+            </div>
+            <div id="memberStatusTableContainer" style="margin-top: 0px; text-align: left;">
+                <!-- Table will be loaded here -->
             </div>
         </div>
     </div>
@@ -343,6 +348,10 @@
 
             // Create table header row
             const headerRow = thead.insertRow();
+            // Assuming the header for Status is "Tình trạng" or similar based on previous context
+            // You might need to adjust this if the actual header in your sheet is different
+            const statusHeaderName = 'Tình trạng'; // Adjust this if your actual header is different
+
             Object.keys(data[0]).forEach(key => {
                 const th = document.createElement('th');
                 th.textContent = key;
@@ -352,6 +361,11 @@
             // Create table body rows
             data.forEach(rowData => {
                 const row = tbody.insertRow();
+                // Check if the status column exists and starts with "Không OK"
+                if (rowData[statusHeaderName] && rowData[statusHeaderName].startsWith('Không OK')) {
+                    row.classList.add('status-not-ok-row');
+                }
+
                 Object.values(rowData).forEach(cellValue => {
                     const td = row.insertCell();
                     td.textContent = cellValue;
@@ -422,23 +436,11 @@
                 showMessageBox('Dữ liệu đã được gửi thành công!');
 
             } catch (error) {
-                console.error('Lỗi khi gửi dữ liệu:', error);
-                showMessageBox('Đã xảy ra lỗi khi gửi dữ liệu. Vui lòng thử lại.');
+                    console.error('Lỗi khi gửi dữ liệu:', error);
+                    showMessageBox('Đã xảy ra lỗi khi gửi dữ liệu. Vui lòng thử lại.');
             } finally {
                 hideLoading();
             }
-        }
-
-        // New function to reload the table data
-        function reloadTable() {
-            viewList(); // Simply call viewList again to re-fetch and re-display
-        }
-
-        // New function to go back to the status update screen
-        function goBackToUpdateStatus() {
-            document.getElementById('statusViewScreen').style.display = 'none'; // Hide table view
-            document.getElementById('secondScreen').style.display = 'block'; // Show status update screen
-            document.getElementById('memberStatusTableContainer').innerHTML = ''; // Clear table content
         }
     </script>
 </body>
