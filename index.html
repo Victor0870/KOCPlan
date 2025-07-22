@@ -120,16 +120,21 @@
             display: none; /* Hidden by default */
         }
         /* Table styles */
+        #memberStatusTableContainer {
+            margin-top: 30px;
+            text-align: left;
+        }
         #memberStatusTableContainer table {
-            width: 100%;
+            width: 100%; /* Table itself will try to be 100% of its container */
             border-collapse: collapse;
-            margin-top: 20px;
+            min-width: 500px; /* Ensure table has a minimum width to trigger scroll if needed */
         }
         #memberStatusTableContainer th,
         #memberStatusTableContainer td {
             border: 1px solid #ddd;
             padding: 8px;
             text-align: left;
+            white-space: nowrap; /* Prevent text wrapping in cells */
         }
         #memberStatusTableContainer th {
             background-color: #f2f2f2;
@@ -139,11 +144,27 @@
         .status-not-ok-row {
             background-color: #ffe0b2; /* Light orange/peach color */
         }
+        /* New scrollable container for the table */
+        .table-scroll-wrapper {
+            overflow-x: auto; /* Enable horizontal scrolling */
+            width: 100%; /* Take full width of its parent */
+            -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+        }
         .action-buttons {
             display: flex;
             justify-content: space-around;
-            margin-top: 0px; /* Adjusted margin to place buttons at the top */
-            margin-bottom: 20px; /* Add space below buttons */
+            margin-top: 20px; /* Default margin-top for spacing */
+            margin-bottom: 20px; /* Default margin-bottom for spacing */
+        }
+        /* Specific margin for top action buttons */
+        .action-buttons.top-buttons {
+            margin-top: 0;
+            margin-bottom: 20px;
+        }
+        /* Specific margin for bottom action buttons */
+        .action-buttons.bottom-buttons {
+            margin-top: 20px;
+            margin-bottom: 0;
         }
         .action-buttons button {
             width: 45%; /* Adjust width for two buttons */
@@ -191,12 +212,16 @@
         </div>
 
         <div id="statusViewScreen"> <!-- New screen for table and navigation -->
-            <div class="action-buttons">
+            <div class="action-buttons top-buttons"> <!-- Top buttons -->
                 <button onclick="reloadTable()">Tải lại</button>
                 <button onclick="goBackToUpdateStatus()">Quay lại</button>
             </div>
-            <div id="memberStatusTableContainer" style="margin-top: 0px; text-align: left;">
+            <div id="memberStatusTableContainer">
                 <!-- Table will be loaded here -->
+            </div>
+            <div class="action-buttons bottom-buttons"> <!-- Bottom buttons -->
+                <button onclick="reloadTable()">Tải lại</button>
+                <button onclick="goBackToUpdateStatus()">Quay lại</button>
             </div>
         </div>
     </div>
@@ -296,7 +321,6 @@
 
                 displayTable(data); // Display data in a table
                 hideLoading();
-                showMessageBox('Đã tải xong dữ liệu tình trạng thành viên.'); // Only show this message
             } catch (error) {
                 console.error('Lỗi khi tải dữ liệu từ Google Sheet:', error);
                 hideLoading();
@@ -342,6 +366,10 @@
                 return;
             }
 
+            // Create a wrapper for horizontal scrolling
+            const scrollWrapper = document.createElement('div');
+            scrollWrapper.classList.add('table-scroll-wrapper');
+
             const table = document.createElement('table');
             const thead = table.createTHead();
             const tbody = table.createTBody();
@@ -349,7 +377,6 @@
             // Create table header row
             const headerRow = thead.insertRow();
             // Assuming the header for Status is "Tình trạng" or similar based on previous context
-            // You might need to adjust this if the actual header in your sheet is different
             const statusHeaderName = 'Tình trạng'; // Adjust this if your actual header is different
 
             Object.keys(data[0]).forEach(key => {
@@ -373,7 +400,8 @@
                 });
             });
 
-            tableContainer.appendChild(table);
+            scrollWrapper.appendChild(table); // Append table to the wrapper
+            tableContainer.appendChild(scrollWrapper); // Append wrapper to the container
         }
 
         function handleCheckboxChange(changedCheckbox) {
@@ -442,6 +470,19 @@
                 hideLoading();
             }
         }
+
+        // Function to reload the table data
+        function reloadTable() {
+            viewList(); // Simply call viewList again to re-fetch and re-display
+        }
+
+        // Function to go back to the status update screen
+        function goBackToUpdateStatus() {
+            document.getElementById('statusViewScreen').style.display = 'none'; // Hide table view
+            document.getElementById('secondScreen').style.display = 'block'; // Show status update screen
+            document.getElementById('memberStatusTableContainer').innerHTML = ''; // Clear table content
+        }
     </script>
 </body>
 </html>
+
