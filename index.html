@@ -131,7 +131,7 @@
         #memberStatusTableContainer table {
             width: 100%; /* Table itself will try to be 100% of its container */
             border-collapse: collapse;
-            /* Removed min-width: 500px; to allow table to shrink on smaller screens */
+            /* Removed min-width to allow table to shrink on smaller screens */
         }
         #memberStatusTableContainer th,
         #memberStatusTableContainer td {
@@ -442,8 +442,9 @@
                 if (gid === GOOGLE_SHEET_GID_DETAIL) {
                     th.style.whiteSpace = 'nowrap';
                 } else if (gid === GOOGLE_SHEET_GID_SUMMARY) {
-                    // Center text for summary report headers
+                    // Center text and reduce font size for summary report headers
                     th.style.textAlign = 'center';
+                    th.style.fontSize = '12px'; /* Reduced font size for summary report headers */
                 }
                 headerRow.appendChild(th);
             });
