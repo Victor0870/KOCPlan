@@ -1,0 +1,12 @@
+Assets\Scripts\SparePart\MaterialManager.cs(168,66): error CS0103: The name 'HandleAddMaterialToPurchaseClicked' does not exist in the current context
+
+Assets\Scripts\SparePart\MaterialManager.cs(281,66): error CS0103: The name 'HandleAddMaterialToPurchaseClicked' does not exist in the current context
+
+Assets\Scripts\ExcelData\FirebaseToBGDatabasePurchaseSynchronizer.cs(51,53): error CS0266: Cannot implicitly convert type 'float' to 'int'. An explicit conversion exists (are you missing a cast?)
+
+Assets\Scripts\ExcelData\FirebaseToBGDatabasePurchaseSynchronizer.cs(63,57): error CS0266: Cannot implicitly convert type 'float' to 'int'. An explicit conversion exists (are you missing a cast?)
+
+Assets\Scripts\SparePart\MaterialManager.cs(392,45): error CS0266: Cannot implicitly convert type 'float' to 'int'. An explicit conversion exists (are you missing a cast?)
+
+Assets\Scripts\SparePart\MaterialUIManager.cs(381,28): error CS7036: There is no argument given that corresponds to the required formal parameter 'price' of 'PurchaseHistoryItemUI.SetData(string, int, string, DateTime, float)'
+
