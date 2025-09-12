@@ -1,49 +1,118 @@
-private async void HandleRemoveMaterialConfirmed(string materialId)
+using UnityEngine;
+using TMPro;
+using UnityEngine.UI;
+using System;
+
+public class MaterialUsageItemUI : MonoBehaviour
 {
-    Debug.Log($"Đang xử lý yêu cầu xóa vật tư với ID: {materialId} khỏi Task ID: {_currentTaskId}");
+    public TextMeshProUGUI materialNameText;
+    public TMP_InputField quantityInput;
+    public Button increaseButton;
+    public Button decreaseButton;
+    public int oldQuantity;
+    // Thêm các biến mới để hiển thị thông tin
+    public TextMeshProUGUI locationText;
+    public TextMeshProUGUI purposeText;
+    public TextMeshProUGUI typeText;
 
-    var localUsageRecord = E_UsageHistory.FindEntity(e => e.f_materialId == materialId && e.f_taskId == _currentTaskId);
-    var temporaryUsageRecord = _temporaryTaskMaterials.ContainsKey(materialId) ? _temporaryTaskMaterials[materialId] as Dictionary<string, object> : null;
+    private string _materialId;
+    private int _stock;
 
-    if (localUsageRecord != null)
+    public string materialId => _materialId;
+    public int quantity => int.Parse(quantityInput.text);
+    public MaterialUIManager.ChangeType changeType { get; private set; } = MaterialUIManager.ChangeType.NoChange;
+
+    public event Action<string, int> OnIncreaseQuantity;
+    public event Action<string, int> OnDecreaseQuantity;
+    public event Action<string, string> OnRemoveItemRequest;
+
+    public void SetMaterialUsageData(string name, string id, int quantity, int stock, string location, string purpose, string type)
     {
-        Debug.Log("Đã tìm thấy bản ghi sử dụng cục bộ.");
-        if (!string.IsNullOrEmpty(localUsageRecord.f_firestoreDocId))
+        materialNameText.text = name;
+        _materialId = id;
+        _stock = stock;
+        quantityInput.text = quantity.ToString();
+        oldQuantity = quantity;
+        increaseButton.onClick.AddListener(IncreaseQuantity);
+        decreaseButton.onClick.AddListener(DecreaseQuantity);
+
+        // Gán giá trị cho các trường mới
+        if (locationText != null) locationText.text = location;
+        if (purposeText != null) purposeText.text = purpose;
+        if (typeText != null) typeText.text = type;
+
+        UpdateButtons(quantity, stock);
+    }
+
+    private void IncreaseQuantity()
+    {
+        int newQuantity = int.Parse(quantityInput.text) + 1;
+        if (newQuantity <= _stock)
         {
-            await _materialDataHandler.DeleteMaterialUsage(_currentTaskId, localUsageRecord.f_firestoreDocId);
-            Debug.Log($"Đã gửi yêu cầu xóa bản ghi Firestore với ID: {localUsageRecord.f_firestoreDocId}");
+            quantityInput.text = newQuantity.ToString();
+            changeType = MaterialUIManager.ChangeType.Increased;
+            OnIncreaseQuantity?.Invoke(_materialId, newQuantity);
+        }
+    }
+
+    private void DecreaseQuantity()
+    {
+        int currentQuantity = int.Parse(quantityInput.text);
+        if (currentQuantity == 1)
+        {
+            string message = $"Bạn có chắc chắn muốn xóa vật tư {materialNameText.text} khỏi danh sách sử dụng không?";
+            OnRemoveItemRequest?.Invoke(_materialId, message);
         }
         else
         {
-            Debug.LogWarning("Không tìm thấy firestoreDocId, chỉ xóa bản ghi cục bộ.");
+            int newQuantity = currentQuantity - 1;
+            quantityInput.text = newQuantity.ToString();
+            changeType = MaterialUIManager.ChangeType.Decreased;
+            OnDecreaseQuantity?.Invoke(_materialId, newQuantity);
         }
-
-        localUsageRecord.Delete();
-        SaveData.Save();
-        Debug.Log("Đã xóa bản ghi sử dụng vật tư cục bộ.");
-
-        var localMaterial = E_SparePart.FindEntity(entity => entity.f_No.ToString() == materialId);
-        if (localMaterial != null)
-        {
-            // Tăng tồn kho trở lại
-            localMaterial.f_Stock += localUsageRecord.f_quantity; 
-            await synchronizerToFirebase.SynchronizeSingleSparePart(localMaterial);
-            SaveData.Save();
-            Debug.Log("Đã lưu dữ liệu vào bộ nhớ cục bộ sau khi xóa vật tư và tăng stock.");
-        }
-
-        _materialUIManager.RemoveTemporaryMaterial(materialId);
-        Debug.Log("Đã cập nhật giao diện người dùng.");
     }
-    else if (temporaryUsageRecord != null)
+
+    public void UpdateButtons(int currentQuantity, int stock)
     {
-        Debug.Log("Đã tìm thấy bản ghi tạm thời. Tiến hành xóa.");
-        _temporaryTaskMaterials.Remove(materialId);
-        _materialUIManager.RemoveTemporaryMaterial(materialId);
-        Debug.Log("Đã xóa bản ghi tạm thời và cập nhật giao diện.");
-    }
-    else
-    {
-        Debug.LogWarning("Không tìm thấy bản ghi sử dụng vật tư cục bộ hoặc tạm thời để xóa.");
+        increaseButton.interactable = currentQuantity < stock;
+        decreaseButton.interactable = currentQuantity >= 1;
     }
 }
+
+
+//materilUImanager
+
+    private void DisplayMaterialForUsage(string materialId, string quantity)
+    {
+        if (_usageItemPrefab == null || _usageListParent == null)
+        {
+            Debug.LogError("Usage Item Prefab hoặc Parent Transform chưa được gán!");
+            return;
+        }
+
+        var material = E_SparePart.FindEntity(entity => entity.f_No.ToString() == materialId);
+        if (material == null) return;
+
+        GameObject usageUI = GameObject.Instantiate(_usageItemPrefab, _usageListParent);
+        MaterialUsageItemUI itemScript = usageUI.GetComponent<MaterialUsageItemUI>();
+        if (itemScript != null)
+        {
+            // Cập nhật lời gọi phương thức SetMaterialUsageData để truyền thêm thông tin
+            itemScript.SetMaterialUsageData(
+                material.f_name, 
+                materialId, 
+                int.Parse(quantity), 
+                material.f_Stock,
+                material.f_Location, // Thêm vị trí
+                material.f_Purpose,  // Thêm mục đích
+                material.f_Type      // Thêm loại
+            );
+            _currentUsageItems[materialId] = itemScript;
+
+            itemScript.OnIncreaseQuantity += (id, newQ) => OnQuantityChanged?.Invoke(id, newQ, int.Parse(quantity));
+            itemScript.OnDecreaseQuantity += (id, newQ) => OnQuantityChanged?.Invoke(id, newQ, int.Parse(quantity));
+            itemScript.OnRemoveItemRequest += (id, message) => ShowConfirmPanel(message, id);
+        }
+    }
+
+
