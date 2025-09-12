@@ -1,118 +1,65 @@
-using UnityEngine;
-using TMPro;
-using UnityEngine.UI;
-using System;
-
-public class MaterialUsageItemUI : MonoBehaviour
-{
-    public TextMeshProUGUI materialNameText;
-    public TMP_InputField quantityInput;
-    public Button increaseButton;
-    public Button decreaseButton;
-    public int oldQuantity;
-    // Thêm các biến mới để hiển thị thông tin
-    public TextMeshProUGUI locationText;
-    public TextMeshProUGUI purposeText;
-    public TextMeshProUGUI typeText;
-
-    private string _materialId;
-    private int _stock;
-
-    public string materialId => _materialId;
-    public int quantity => int.Parse(quantityInput.text);
-    public MaterialUIManager.ChangeType changeType { get; private set; } = MaterialUIManager.ChangeType.NoChange;
-
-    public event Action<string, int> OnIncreaseQuantity;
-    public event Action<string, int> OnDecreaseQuantity;
-    public event Action<string, string> OnRemoveItemRequest;
-
-    public void SetMaterialUsageData(string name, string id, int quantity, int stock, string location, string purpose, string type)
+    private void DisplayTask(Dictionary<string, object> taskData, Transform parentTransform, bool isShortDisplay)
     {
-        materialNameText.text = name;
-        _materialId = id;
-        _stock = stock;
-        quantityInput.text = quantity.ToString();
-        oldQuantity = quantity;
-        increaseButton.onClick.AddListener(IncreaseQuantity);
-        decreaseButton.onClick.AddListener(DecreaseQuantity);
-
-        // Gán giá trị cho các trường mới
-        if (locationText != null) locationText.text = location;
-        if (purposeText != null) purposeText.text = purpose;
-        if (typeText != null) typeText.text = type;
-
-        UpdateButtons(quantity, stock);
-    }
-
-    private void IncreaseQuantity()
-    {
-        int newQuantity = int.Parse(quantityInput.text) + 1;
-        if (newQuantity <= _stock)
+        if (_taskItemPrefab == null || parentTransform == null)
         {
-            quantityInput.text = newQuantity.ToString();
-            changeType = MaterialUIManager.ChangeType.Increased;
-            OnIncreaseQuantity?.Invoke(_materialId, newQuantity);
-        }
-    }
-
-    private void DecreaseQuantity()
-    {
-        int currentQuantity = int.Parse(quantityInput.text);
-        if (currentQuantity == 1)
-        {
-            string message = $"Bạn có chắc chắn muốn xóa vật tư {materialNameText.text} khỏi danh sách sử dụng không?";
-            OnRemoveItemRequest?.Invoke(_materialId, message);
-        }
-        else
-        {
-            int newQuantity = currentQuantity - 1;
-            quantityInput.text = newQuantity.ToString();
-            changeType = MaterialUIManager.ChangeType.Decreased;
-            OnDecreaseQuantity?.Invoke(_materialId, newQuantity);
-        }
-    }
-
-    public void UpdateButtons(int currentQuantity, int stock)
-    {
-        increaseButton.interactable = currentQuantity < stock;
-        decreaseButton.interactable = currentQuantity >= 1;
-    }
-}
-
-
-//materilUImanager
-
-    private void DisplayMaterialForUsage(string materialId, string quantity)
-    {
-        if (_usageItemPrefab == null || _usageListParent == null)
-        {
-            Debug.LogError("Usage Item Prefab hoặc Parent Transform chưa được gán!");
+            Debug.LogError("Task Item Prefab hoặc Parent Transform chưa được gán!");
             return;
         }
 
-        var material = E_SparePart.FindEntity(entity => entity.f_No.ToString() == materialId);
-        if (material == null) return;
+        GameObject taskUI = GameObject.Instantiate(_taskItemPrefab, parentTransform);
 
-        GameObject usageUI = GameObject.Instantiate(_usageItemPrefab, _usageListParent);
-        MaterialUsageItemUI itemScript = usageUI.GetComponent<MaterialUsageItemUI>();
-        if (itemScript != null)
+        TaskItemUI taskItemUIScript = taskUI.GetComponent<TaskItemUI>();
+        if (taskItemUIScript != null)
         {
-            // Cập nhật lời gọi phương thức SetMaterialUsageData để truyền thêm thông tin
-            itemScript.SetMaterialUsageData(
-                material.f_name, 
-                materialId, 
-                int.Parse(quantity), 
-                material.f_Stock,
-                material.f_Location, // Thêm vị trí
-                material.f_Purpose,  // Thêm mục đích
-                material.f_Type      // Thêm loại
-            );
-            _currentUsageItems[materialId] = itemScript;
+            string content = taskData.TryGetValue("content", out object contentVal) ? contentVal.ToString() : "N/A";
+            string location = taskData.TryGetValue("location", out object locationVal) ? locationVal.ToString() : "N/A";
+            string createdBy = taskData.TryGetValue("createdBy", out object createdByVal) ? createdByVal.ToString() : "N/A";
+            string status = taskData.TryGetValue("status", out object statusVal) ? statusVal.ToString() : TaskConstants.STATUS_PENDING;
 
-            itemScript.OnIncreaseQuantity += (id, newQ) => OnQuantityChanged?.Invoke(id, newQ, int.Parse(quantity));
-            itemScript.OnDecreaseQuantity += (id, newQ) => OnQuantityChanged?.Invoke(id, newQ, int.Parse(quantity));
-            itemScript.OnRemoveItemRequest += (id, message) => ShowConfirmPanel(message, id);
+            string timestampString = "Đang tải...";
+            if (taskData.TryGetValue("lastUpdated", out object lastUpdatedObject))
+            {
+                DateTime taskTimestamp = DateTime.MinValue;
+                if (lastUpdatedObject is Firebase.Firestore.Timestamp firebaseTimestamp)
+                {
+                    taskTimestamp = firebaseTimestamp.ToDateTime();
+                }
+                else if (lastUpdatedObject is DateTime localDateTime)
+                {
+                    taskTimestamp = localDateTime;
+                }
+                
+                if (taskTimestamp > DateTime.MinValue)
+                {
+                     timestampString = isShortDisplay ? taskTimestamp.ToString("HH:mm") : taskTimestamp.ToString("dd/MM/yyyy HH:mm:ss");
+                }
+            }
+
+            taskItemUIScript.SetBasicTaskData(content, location, createdBy, timestampString, status);
+
+            if (isShortDisplay)
+            {
+                if (taskItemUIScript.locationText != null) taskItemUIScript.locationText.gameObject.SetActive(false);
+                if (taskItemUIScript.createdByText != null) taskItemUIScript.createdByText.gameObject.SetActive(false);
+            }
+            else
+            {
+                if (taskItemUIScript.locationText != null) taskItemUIScript.locationText.gameObject.SetActive(true);
+                if (taskItemUIScript.createdByText != null) taskItemUIScript.createdByText.gameObject.SetActive(true);
+            }
+
+            if (taskItemUIScript.taskItemButton != null)
+            {
+                var currentTaskData = taskData;
+                taskItemUIScript.taskItemButton.onClick.AddListener(() => OnTaskItemClicked?.Invoke(currentTaskData));
+            }
+            else
+            {
+                Debug.LogWarning("Task Item Button (taskItemButton) not assigned on TaskItemUI prefab. Cannot show details.");
+            }
+        }
+        else
+        {
+            Debug.LogWarning("TaskItemUI script không tìm thấy trên prefab. Đảm bảo bạn đã gắn nó vào prefab.");
         }
     }
-
-
