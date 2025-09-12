@@ -1,12 +1,42 @@
-Assets\Scripts\SparePart\MaterialManager.cs(168,66): error CS0103: The name 'HandleAddMaterialToPurchaseClicked' does not exist in the current context
+    private void DisplayMaterial(E_SparePart materialData, bool isSelectPanel)
+    {
+        GameObject prefabToUse = isSelectPanel ? _materialSelectPanelItemPrefab : _materialItemPrefab;
+        Transform parentToUse = isSelectPanel ? _materialSelectParent : _materialsListParent;
+        if (prefabToUse == null || parentToUse == null)
+        {
+            Debug.LogError("Prefab hoặc Parent Transform chưa được gán!");
+            return;
+        }
 
-Assets\Scripts\SparePart\MaterialManager.cs(281,66): error CS0103: The name 'HandleAddMaterialToPurchaseClicked' does not exist in the current context
+        GameObject materialUI = GameObject.Instantiate(prefabToUse, parentToUse);
+        MaterialItemUI itemScript = materialUI.GetComponent<MaterialItemUI>();
+        if (itemScript != null)
+        {
+            string name = materialData.f_name;
+            string stock = materialData.f_Stock.ToString();
+            string location = materialData.f_Location;
+            string purpose = materialData.f_Purpose;
+            string category = materialData.f_Category;
+            string type = materialData.f_Type;
+            string materialId = materialData.f_No.ToString();
 
-Assets\Scripts\ExcelData\FirebaseToBGDatabasePurchaseSynchronizer.cs(51,53): error CS0266: Cannot implicitly convert type 'float' to 'int'. An explicit conversion exists (are you missing a cast?)
-
-Assets\Scripts\ExcelData\FirebaseToBGDatabasePurchaseSynchronizer.cs(63,57): error CS0266: Cannot implicitly convert type 'float' to 'int'. An explicit conversion exists (are you missing a cast?)
-
-Assets\Scripts\SparePart\MaterialManager.cs(392,45): error CS0266: Cannot implicitly convert type 'float' to 'int'. An explicit conversion exists (are you missing a cast?)
-
-Assets\Scripts\SparePart\MaterialUIManager.cs(381,28): error CS7036: There is no argument given that corresponds to the required formal parameter 'price' of 'PurchaseHistoryItemUI.SetData(string, int, string, DateTime, float)'
-
+            itemScript.SetMaterialData(name, stock, location, purpose, category, type);
+            if (isSelectPanel && itemScript.addButton != null)
+            {
+                if (_purchasePanel != null && _purchasePanel.activeSelf)
+                {
+                    itemScript.addButton.onClick.AddListener(() => OnAddMaterialToPurchaseClicked?.Invoke(materialId, 1));
+                    itemScript.addButton.interactable = true; // Luôn cho phép thêm vào khi ở chế độ mua hàng
+                }
+                else // Đây là chế độ sử dụng
+                {
+                    itemScript.addButton.onClick.AddListener(() => OnAddMaterialToTaskClicked?.Invoke(materialId, 1));
+                    itemScript.addButton.interactable = materialData.f_Stock > 0; // Chỉ cho phép thêm vào khi tồn kho > 0
+                }
+            }
+            if (!isSelectPanel && itemScript.itemButton != null)
+            {
+                itemScript.itemButton.onClick.AddListener(() => OnMaterialItemSelected?.Invoke(materialId));
+            }
+        }
+    }
