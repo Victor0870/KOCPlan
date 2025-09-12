@@ -1,39 +1,49 @@
-    private void DisplayMaterial(E_SparePart materialData, bool isSelectPanel)
+    private async void HandleRemoveMaterialConfirmed(string materialId)
     {
-        GameObject prefabToUse = isSelectPanel ? _materialSelectPanelItemPrefab : _materialItemPrefab;
-        Transform parentToUse = isSelectPanel ? _materialSelectParent : _materialsListParent;
-        if (prefabToUse == null || parentToUse == null)
-        {
-            Debug.LogError("Prefab hoặc Parent Transform chưa được gán!");
-            return;
-        }
+        Debug.Log($"Đang xử lý yêu cầu xóa vật tư với ID: {materialId} khỏi Task ID: {_currentTaskId}");
 
-        GameObject materialUI = GameObject.Instantiate(prefabToUse, parentToUse);
-        MaterialItemUI itemScript = materialUI.GetComponent<MaterialItemUI>();
-        if (itemScript != null)
-        {
-            string name = materialData.f_name;
-            string stock = materialData.f_Stock.ToString();
-            string location = materialData.f_Location;
-            string purpose = materialData.f_Purpose;
-            string category = materialData.f_Category;
-            string type = materialData.f_Type;
-            string materialId = materialData.f_No.ToString();
+        // Tìm bản ghi sử dụng vật tư cục bộ
+        var localUsageRecord = E_UsageHistory.FindEntity(e => e.f_materialId == materialId && e.f_taskId == _currentTaskId);
 
-            itemScript.SetMaterialData(name, stock, location, purpose, category, type);
-            if (isSelectPanel && itemScript.addButton != null)
+        if (localUsageRecord != null)
+        {
+            Debug.Log("Đã tìm thấy bản ghi sử dụng cục bộ.");
+            if (!string.IsNullOrEmpty(localUsageRecord.f_firestoreDocId))
             {
-                if (_purchasePanel != null && _purchasePanel.activeSelf)
-                {
-                    itemScript.addButton.onClick.AddListener(() => OnAddMaterialToPurchaseClicked?.Invoke(materialId, 1));
-                    itemScript.addButton.interactable = true; // Luôn cho phép thêm vào khi ở chế độ mua hàng
-                }
-                else // Đây là chế độ sử dụng
-                {
-                    itemScript.addButton.onClick.AddListener(() => OnAddMaterialToTaskClicked?.Invoke(materialId, 1));
-                    itemScript.addButton.interactable = materialData.f_Stock > 0; // Chỉ cho phép thêm vào khi tồn kho > 0
-                }
+                // Xóa trên Firebase trước
+                await _materialDataHandler.DeleteMaterialUsage(_currentTaskId, localUsageRecord.f_firestoreDocId);
+                Debug.Log($"Đã gửi yêu cầu xóa bản ghi Firestore với ID: {localUsageRecord.f_firestoreDocId}");
             }
+            else
+            {
+                Debug.LogWarning("Không tìm thấy firestoreDocId, chỉ xóa bản ghi cục bộ.");
+            }
+
+            // Xóa bản ghi cục bộ
+            localUsageRecord.Delete();
+            SaveData.Save();
+            Debug.Log("Đã xóa bản ghi sử dụng vật tư cục bộ.");
+
+            // Tăng tồn kho vật tư
+            var localMaterial = E_SparePart.FindEntity(entity => entity.f_No.ToString() == materialId);
+            if (localMaterial != null)
+            {
+                // Giả định chúng ta xóa 1 vật tư khỏi danh sách, nếu cần xóa nhiều hơn, cần điều chỉnh logic
+                localMaterial.f_Stock += 1; 
+                await synchronizerToFirebase.SynchronizeSingleSparePart(localMaterial);
+                SaveData.Save();
+                Debug.Log("Đã lưu dữ liệu vào bộ nhớ cục bộ sau khi xóa vật tư và tăng stock.");
+            }
+
+            // Cập nhật giao diện người dùng
+            _materialUIManager.RemoveTemporaryMaterial(materialId);
+            Debug.Log("Đã cập nhật giao diện người dùng.");
+        }
+        else
+        {
+            Debug.LogWarning("Không tìm thấy bản ghi sử dụng vật tư cục bộ để xóa.");
+        }
+    }
             if (!isSelectPanel && itemScript.itemButton != null)
             {
                 itemScript.itemButton.onClick.AddListener(() => OnMaterialItemSelected?.Invoke(materialId));
