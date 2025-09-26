@@ -369,43 +369,51 @@
             });
         }
         function displayTable(data, gid) {
-            const tableContainer = document.getElementById('memberStatusTableContainer');
-            tableContainer.innerHTML = '';
-            if (!data.length) {
-                tableContainer.innerHTML = '<p>Không có dữ liệu để hiển thị.</p>';
-                return;
-            }
-            let wrapper = tableContainer;
-            if (gid === GOOGLE_SHEET_GID_DETAIL) {
-                wrapper = document.createElement('div');
-                wrapper.classList.add('table-scroll-wrapper');
-            }
-            const table = document.createElement('table');
-            const thead = table.createTHead();
-            const tbody = table.createTBody();
-            const headerRow = thead.insertRow();
-            Object.keys(data[0]).forEach(key => {
-                const th = document.createElement('th');
-                th.textContent = key;
-                if (gid === GOOGLE_SHEET_GID_DETAIL) th.style.whiteSpace = 'nowrap';
-                if (gid === GOOGLE_SHEET_GID_SUMMARY) th.style.textAlign = 'center';
-                headerRow.appendChild(th);
-            });
-            data.forEach(rowData => {
-                const row = tbody.insertRow();
-                if (gid === GOOGLE_SHEET_GID_DETAIL && rowData['Tình trạng'] && rowData['Tình trạng'].startsWith('Không OK')) {
-                    row.classList.add('status-not-ok-row');
-                }
-                Object.values(rowData).forEach(cellValue => {
-                    const td = row.insertCell();
-                    td.textContent = cellValue;
-                    if (gid === GOOGLE_SHEET_GID_DETAIL) td.style.whiteSpace = 'nowrap';
-                    if (gid === GOOGLE_SHEET_GID_SUMMARY) td.style.textAlign = 'center';
-                });
-            });
-            wrapper.appendChild(table);
-            if (gid === GOOGLE_SHEET_GID_DETAIL) tableContainer.appendChild(wrapper);
+    const tableContainer = document.getElementById('memberStatusTableContainer');
+    tableContainer.innerHTML = '';
+    if (!data.length) {
+        tableContainer.innerHTML = '<p>Không có dữ liệu để hiển thị.</p>';
+        return;
+    }
+    
+    // Tạo bảng
+    const table = document.createElement('table');
+    const thead = table.createTHead();
+    const tbody = table.createTBody();
+    
+    // Thêm các tiêu đề cột
+    const headerRow = thead.insertRow();
+    Object.keys(data[0]).forEach(key => {
+        const th = document.createElement('th');
+        th.textContent = key;
+        th.style.whiteSpace = 'nowrap';
+        if (gid === GOOGLE_SHEET_GID_SUMMARY) th.style.textAlign = 'center';
+        headerRow.appendChild(th);
+    });
+    
+    // Thêm các hàng dữ liệu
+    data.forEach(rowData => {
+        const row = tbody.insertRow();
+        if (gid === GOOGLE_SHEET_GID_DETAIL && rowData['Tình trạng'] && rowData['Tình trạng'].startsWith('Không OK')) {
+            row.classList.add('status-not-ok-row');
         }
+        Object.values(rowData).forEach(cellValue => {
+            const td = row.insertCell();
+            td.textContent = cellValue;
+            td.style.whiteSpace = 'nowrap';
+            if (gid === GOOGLE_SHEET_GID_SUMMARY) td.style.textAlign = 'center';
+        });
+    });
+
+    table.appendChild(thead);
+    table.appendChild(tbody);
+
+    // Áp dụng lớp cuộn ngang cho cả hai trường hợp
+    const wrapper = document.createElement('div');
+    wrapper.classList.add('table-scroll-wrapper');
+    wrapper.appendChild(table);
+    tableContainer.appendChild(wrapper);
+}
 
         function handleCheckboxChange(changed) {
             const ok = document.getElementById('statusOk');
