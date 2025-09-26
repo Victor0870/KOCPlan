@@ -20,7 +20,7 @@
             border-radius: 8px;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
             width: 100%;
-            max-width: 600px; /* Increased max-width for a wider layout */
+            max-width: 600px;
             text-align: center;
         }
         .input-group {
@@ -40,13 +40,12 @@
             border-radius: 4px;
             font-size: 16px;
         }
-        /* Specific styles for the description input box */
-        .description-input-box { /* Applied to all description inputs */
-            width: calc(100% - 20px); /* Adjusted width to fit new padding */
-            padding: 8px; /* Reduced padding */
-            height: 55px; /* Reduced height to about 1/3 of previous (160px -> 55px) */
-            font-size: 16px; /* Adjusted font size to fit new height */
-            box-sizing: border-box; /* Include padding in the width calculation */
+        .description-input-box {
+            width: calc(100% - 20px);
+            padding: 8px;
+            height: 55px;
+            font-size: 16px;
+            box-sizing: border-box;
         }
         button {
             background-color: #007bff;
@@ -65,49 +64,47 @@
             display: none;
             text-align: left;
         }
-        #statusViewScreen { /* New screen for table view */
+        #statusViewScreen {
             display: none;
             text-align: left;
         }
         .checkbox-group {
             margin-top: 20px;
             margin-bottom: 15px;
-            display: flex; /* Use flexbox for better alignment */
-            justify-content: center; /* Center the checkboxes */
+            display: flex;
+            justify-content: center;
             align-items: center;
         }
         .checkbox-group label {
-            margin-right: 25px; /* Increase space between checkboxes */
-            display: flex; /* Align checkbox and text */
+            margin-right: 25px;
+            display: flex;
             align-items: center;
-            font-size: 18px; /* Make label text larger */
+            font-size: 18px;
         }
         .checkbox-group input[type="checkbox"] {
-            transform: scale(1.5); /* Make checkbox larger */
-            margin-right: 10px; /* Space between checkbox and its label text */
-            width: 20px; /* Ensure consistent size */
-            height: 20px; /* Ensure consistent size */
+            transform: scale(1.5);
+            margin-right: 10px;
+            width: 20px;
+            height: 20px;
         }
-        .description-input-group { /* General class for description input sections */
+        .description-input-group {
             margin-top: 15px;
             margin-bottom: 15px;
         }
         .center-button-container {
-            text-align: center; /* Center the button within this container */
+            text-align: center;
             margin-top: 20px;
         }
-        /* Styling for the "Xem tình trạng các thành viên khác" button */
-        .action-main-buttons { /* Class for main action buttons like "Báo cáo tổng hợp" and "Chi tiết" */
+        .action-main-buttons {
             display: flex;
             justify-content: space-around;
             margin-bottom: 20px;
         }
         .action-main-buttons button {
-            width: 48%; /* Adjust width for two buttons side-by-side */
+            width: 48%;
             padding: 15px 20px;
             font-size: 18px;
         }
-        /* Styling for the loading overlay */
         .loading-overlay {
             position: fixed;
             top: 0;
@@ -121,57 +118,50 @@
             color: white;
             font-size: 20px;
             z-index: 1001;
-            display: none; /* Hidden by default */
+            display: none;
         }
-        /* Table styles */
         #memberStatusTableContainer {
             margin-top: 30px;
             text-align: left;
         }
         #memberStatusTableContainer table {
-            width: 100%; /* Table itself will try to be 100% of its container */
+            width: 100%;
             border-collapse: collapse;
-            /* Removed min-width to allow table to shrink on smaller screens */
         }
         #memberStatusTableContainer th,
         #memberStatusTableContainer td {
             border: 1px solid #ddd;
             padding: 8px;
             text-align: left;
-            /* Removed white-space: nowrap; to allow wrapping by default */
         }
         #memberStatusTableContainer th {
             background-color: #f2f2f2;
             font-weight: bold;
         }
-        /* New style for "Không OK" rows */
         .status-not-ok-row {
-            background-color: #ffe0b2; /* Light orange/peach color */
+            background-color: #ffe0b2;
         }
-        /* New scrollable container for the table */
         .table-scroll-wrapper {
-            overflow-x: auto; /* Enable horizontal scrolling */
-            width: 100%; /* Take full width of its parent */
-            -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+            overflow-x: auto;
+            width: 100%;
+            -webkit-overflow-scrolling: touch;
         }
         .action-buttons {
             display: flex;
             justify-content: space-around;
-            margin-top: 20px; /* Default margin-top for spacing */
-            margin-bottom: 20px; /* Default margin-bottom for spacing */
+            margin-top: 20px;
+            margin-bottom: 20px;
         }
-        /* Specific margin for top action buttons */
         .action-buttons.top-buttons {
             margin-top: 0;
             margin-bottom: 20px;
         }
-        /* Specific margin for bottom action buttons */
         .action-buttons.bottom-buttons {
             margin-top: 20px;
             margin-bottom: 0;
         }
         .action-buttons button {
-            width: 45%; /* Adjust width for two buttons */
+            width: 45%;
             padding: 10px 15px;
             font-size: 16px;
             margin: 0 5px;
@@ -184,7 +174,7 @@
             <h2>Đăng nhập</h2>
             <div class="input-group">
                 <label for="employeeCode">Mã nhân viên (gồm 3 số):</label>
-                <input type="text" id="employeeCode" name="employeeCode" maxlength="3"> <!-- Added maxlength -->
+                <input type="text" id="employeeCode" name="employeeCode" maxlength="3">
             </div>
             <div class="input-group">
                 <label for="password">Mật khẩu:</label>
@@ -196,7 +186,7 @@
         <div id="secondScreen">
             <div class="action-main-buttons">
                 <button id="summaryReportButton" onclick="viewSummaryReport()">Báo cáo tổng hợp</button>
-                <button id="detailStatusButton" onclick="viewDetailStatus()">Chi tiết</button> <!-- Renamed button -->
+                <button id="detailStatusButton" onclick="viewDetailStatus()">Chi tiết</button>
             </div>
             <p><strong>Cập nhật tình trạng của bạn:</strong></p>
             <div class="checkbox-group">
@@ -240,20 +230,39 @@
                 <input type="text" id="damageDescription" name="damageDescription" class="description-input-box">
             </div>
 
+            <!-- Câu hỏi mới -->
+            <p><strong>Ngày 29.9.2025 có đi làm được không?</strong></p>
+            <div class="checkbox-group">
+                <label>
+                    <input type="checkbox" id="work29Yes" name="work29" value="yes" onchange="handleWork29CheckboxChange(this)"> Có
+                </label>
+                <label>
+                    <input type="checkbox" id="work29No" name="work29" value="no" onchange="handleWork29CheckboxChange(this)"> Không
+                </label>
+            </div>
+
+            <p><strong>Ngày 30.9.2025 có đi làm được không?</strong></p>
+            <div class="checkbox-group">
+                <label>
+                    <input type="checkbox" id="work30Yes" name="work30" value="yes" onchange="handleWork30CheckboxChange(this)"> Có
+                </label>
+                <label>
+                    <input type="checkbox" id="work30No" name="work30" value="no" onchange="handleWork30CheckboxChange(this)"> Không
+                </label>
+            </div>
+
             <div class="center-button-container">
                 <button onclick="confirmStatus()">Xác nhận</button>
             </div>
         </div>
 
-        <div id="statusViewScreen"> <!-- New screen for table and navigation -->
-            <div class="action-buttons top-buttons"> <!-- Top buttons -->
+        <div id="statusViewScreen">
+            <div class="action-buttons top-buttons">
                 <button onclick="reloadTable()">Tải lại</button>
                 <button onclick="goBackToUpdateStatus()">Quay lại</button>
             </div>
-            <div id="memberStatusTableContainer">
-                <!-- Table will be loaded here -->
-            </div>
-            <div class="action-buttons bottom-buttons" id="bottomActionButtons"> <!-- Added ID for easier targeting -->
+            <div id="memberStatusTableContainer"></div>
+            <div class="action-buttons bottom-buttons" id="bottomActionButtons">
                 <button onclick="reloadTable()">Tải lại</button>
                 <button onclick="goBackToUpdateStatus()">Quay lại</button>
             </div>
@@ -267,44 +276,32 @@
     <script>
         const defaultPassword = "ilvprd";
 
-        // Google Form entry IDs
-        const GOOGLE_FORM_URL = 'https://docs.google.com/forms/d/e/1FAIpQLSeEzqbzQogPZ6-kpsLL5RrKbl93osdy-lexw4hM9LByUispnQ/formResponse'; // Updated Google Form URL
+        const GOOGLE_FORM_URL = 'https://docs.google.com/forms/d/e/1FAIpQLSeEzqbzQogPZ6-kpsLL5RrKbl93osdy-lexw4hM9LByUispnQ/formResponse';
         const ENTRY_EMPLOYEE_CODE = 'entry.418849416';
         const ENTRY_STATUS = 'entry.811863281';
-        const ENTRY_FAMILY_STATUS = 'entry.46892520'; // New entry ID for Family Status
-        const ENTRY_PROPERTY_DAMAGE = 'entry.306535075'; // New entry ID for Property Damage
+        const ENTRY_FAMILY_STATUS = 'entry.46892520';
+        const ENTRY_PROPERTY_DAMAGE = 'entry.306535075';
+        const ENTRY_WORK_29 = 'entry.1788619976';
+        const ENTRY_WORK_30 = 'entry.1160663778';
 
-        // Google Sheet ID and GID (sheet ID, 0 for first sheet)
         const GOOGLE_SHEET_ID = '1jP0-pUAmDuYlnRvtnckuQVaHFHtjgVbxwzht0p8mcE8';
-        const GOOGLE_SHEET_GID_DETAIL = '1306189685'; // GID for "Chi tiết" (previous sheet)
-        const GOOGLE_SHEET_GID_SUMMARY = '737128637'; // New GID for "Báo cáo tổng hợp"
+        const GOOGLE_SHEET_GID_DETAIL = '1306189685';
+        const GOOGLE_SHEET_GID_SUMMARY = '737128637';
 
-        // Variable to store which sheet is currently being viewed
         let currentSheetGid = GOOGLE_SHEET_GID_DETAIL;
 
         function showLoading() {
             document.getElementById('loadingOverlay').style.display = 'flex';
         }
-
         function hideLoading() {
             document.getElementById('loadingOverlay').style.display = 'none';
         }
-
         function showMessageBox(message) {
             const messageBox = document.createElement('div');
             messageBox.style.cssText = `
-                position: fixed;
-                top: 50%;
-                left: 50%;
-                transform: translate(-50%, -50%);
-                background-color: #fff;
-                padding: 20px;
-                border-radius: 8px;
-                box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
-                z-index: 1000;
-                text-align: center;
-                max-width: 300px;
-                font-size: 16px;
+                position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+                background-color: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 0 15px rgba(0,0,0,0.2);
+                z-index: 1000; text-align: center; max-width: 300px; font-size: 16px;
             `;
             messageBox.innerHTML = `
                 <p>${message}</p>
@@ -316,27 +313,18 @@
         function accessPage() {
             const employeeCode = document.getElementById('employeeCode').value;
             const password = document.getElementById('password').value;
-
-            // Validate employee code
             if (employeeCode.length !== 3 || !/^\d+$/.test(employeeCode)) {
-                if (employeeCode.length !== 3) {
-                    showMessageBox('Mã nhân viên chỉ gồm 3 số.');
-                } else {
-                    showMessageBox('Mã nhân viên sai. Vui lòng chỉ nhập số.');
-                }
-                return; // Stop execution if validation fails
+                showMessageBox('Mã nhân viên chỉ gồm 3 số.');
+                return;
             }
-
-            // Validate password
             if (password === defaultPassword) {
                 document.getElementById('firstScreen').style.display = 'none';
                 document.getElementById('secondScreen').style.display = 'block';
-                // Initialize the state of the description box when second screen is shown
                 document.getElementById('statusOk').checked = true;
                 handleCheckboxChange(document.getElementById('statusOk'));
-                document.getElementById('familyOk').checked = true; // Default family status to OK
+                document.getElementById('familyOk').checked = true;
                 handleFamilyCheckboxChange(document.getElementById('familyOk'));
-                document.getElementById('damageNo').checked = true; // Default property damage to Không
+                document.getElementById('damageNo').checked = true;
                 handleDamageCheckboxChange(document.getElementById('damageNo'));
             } else {
                 showMessageBox('Mật khẩu không đúng. Vui lòng thử lại!');
@@ -346,204 +334,120 @@
         async function fetchAndDisplaySheetData(gid) {
             document.getElementById('secondScreen').style.display = 'none';
             document.getElementById('statusViewScreen').style.display = 'block';
-
-            // Control visibility of bottom buttons based on GID
             const bottomActionButtons = document.getElementById('bottomActionButtons');
-            if (gid === GOOGLE_SHEET_GID_SUMMARY) {
-                bottomActionButtons.style.display = 'none'; // Hide for summary report
-            } else {
-                bottomActionButtons.style.display = 'flex'; // Show for detail report
-            }
-
+            bottomActionButtons.style.display = (gid === GOOGLE_SHEET_GID_SUMMARY) ? 'none' : 'flex';
             showLoading();
-
             const sheetUrl = `https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}/gviz/tq?tqx=out:csv&gid=${gid}`;
-
             try {
                 const response = await fetch(sheetUrl);
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
                 const csvText = await response.text();
                 const data = parseCsv(csvText);
-
-                displayTable(data, gid); // Pass gid to displayTable for conditional styling
-                hideLoading();
+                displayTable(data, gid);
             } catch (error) {
-                console.error('Lỗi khi tải dữ liệu từ Google Sheet:', error);
+                console.error(error);
+            } finally {
                 hideLoading();
-                // Removed showMessageBox('Không thể tải dữ liệu. Vui lòng kiểm tra kết nối hoặc quyền truy cập Google Sheet.');
             }
         }
 
-        // Function to handle "Báo cáo tổng hợp" button click
-        async function viewSummaryReport() {
-            currentSheetGid = GOOGLE_SHEET_GID_SUMMARY; // Set current GID to summary
-            await fetchAndDisplaySheetData(currentSheetGid);
+        function viewSummaryReport() {
+            currentSheetGid = GOOGLE_SHEET_GID_SUMMARY;
+            fetchAndDisplaySheetData(currentSheetGid);
         }
-
-        // Function to handle "Chi tiết" button click (formerly viewList)
-        async function viewDetailStatus() {
-            currentSheetGid = GOOGLE_SHEET_GID_DETAIL; // Set current GID to detail
-            await fetchAndDisplaySheetData(currentSheetGid);
+        function viewDetailStatus() {
+            currentSheetGid = GOOGLE_SHEET_GID_DETAIL;
+            fetchAndDisplaySheetData(currentSheetGid);
         }
-
         function parseCsv(csvString) {
             const lines = csvString.trim().split('\n');
-            if (lines.length === 0) return [];
-
-            const headers = lines[0].split(',').map(header => header.trim().replace(/"/g, ''));
-            const rows = lines.slice(1).map(line => {
-                return line.split(',').map(cell => cell.trim().replace(/"/g, ''));
-            });
-
-            return rows.map(row => {
-                const obj = {};
-                headers.forEach((header, index) => {
-                    obj[header] = row[index] || '';
-                });
+            const headers = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
+            return lines.slice(1).map(line => {
+                const cells = line.split(',').map(c => c.trim().replace(/"/g, ''));
+                let obj = {};
+                headers.forEach((h, i) => obj[h] = cells[i] || '');
                 return obj;
             });
         }
-
         function displayTable(data, gid) {
             const tableContainer = document.getElementById('memberStatusTableContainer');
-            if (!tableContainer) {
-                console.error("Table container not found!");
-                return;
-            }
-
             tableContainer.innerHTML = '';
-
-            if (data.length === 0) {
+            if (!data.length) {
                 tableContainer.innerHTML = '<p>Không có dữ liệu để hiển thị.</p>';
                 return;
             }
-
-            let wrapperElement = tableContainer; // Default to direct append
-            // Create a wrapper for horizontal scrolling, only for detail view
+            let wrapper = tableContainer;
             if (gid === GOOGLE_SHEET_GID_DETAIL) {
-                const scrollWrapper = document.createElement('div');
-                scrollWrapper.classList.add('table-scroll-wrapper');
-                wrapperElement = scrollWrapper;
+                wrapper = document.createElement('div');
+                wrapper.classList.add('table-scroll-wrapper');
             }
-
             const table = document.createElement('table');
             const thead = table.createTHead();
             const tbody = table.createTBody();
-
             const headerRow = thead.insertRow();
-            const statusHeaderName = 'Tình trạng'; // Adjust if your actual header is different
-
             Object.keys(data[0]).forEach(key => {
                 const th = document.createElement('th');
                 th.textContent = key;
-                // Apply nowrap style only for detail view headers
-                if (gid === GOOGLE_SHEET_GID_DETAIL) {
-                    th.style.whiteSpace = 'nowrap';
-                } else if (gid === GOOGLE_SHEET_GID_SUMMARY) {
-                    // Center text and reduce font size for summary report headers
-                    th.style.textAlign = 'center';
-                    th.style.fontSize = '12px'; /* Reduced font size for summary report headers */
-                }
+                if (gid === GOOGLE_SHEET_GID_DETAIL) th.style.whiteSpace = 'nowrap';
+                if (gid === GOOGLE_SHEET_GID_SUMMARY) th.style.textAlign = 'center';
                 headerRow.appendChild(th);
             });
-
             data.forEach(rowData => {
                 const row = tbody.insertRow();
-                // Apply styling only for the detail sheet (GOOGLE_SHEET_GID_DETAIL)
-                if (gid === GOOGLE_SHEET_GID_DETAIL && rowData[statusHeaderName] && rowData[statusHeaderName].startsWith('Không OK')) {
+                if (gid === GOOGLE_SHEET_GID_DETAIL && rowData['Tình trạng'] && rowData['Tình trạng'].startsWith('Không OK')) {
                     row.classList.add('status-not-ok-row');
                 }
-
                 Object.values(rowData).forEach(cellValue => {
                     const td = row.insertCell();
                     td.textContent = cellValue;
-                    // Apply nowrap style only for detail view cells
-                    if (gid === GOOGLE_SHEET_GID_DETAIL) {
-                        td.style.whiteSpace = 'nowrap';
-                    } else if (gid === GOOGLE_SHEET_GID_SUMMARY) {
-                         // Center text for summary report cells
-                        td.style.textAlign = 'center';
-                    }
-                    row.appendChild(td);
+                    if (gid === GOOGLE_SHEET_GID_DETAIL) td.style.whiteSpace = 'nowrap';
+                    if (gid === GOOGLE_SHEET_GID_SUMMARY) td.style.textAlign = 'center';
                 });
             });
-
-            wrapperElement.appendChild(table);
-            tableContainer.appendChild(wrapperElement);
+            wrapper.appendChild(table);
+            if (gid === GOOGLE_SHEET_GID_DETAIL) tableContainer.appendChild(wrapper);
         }
 
-        // Handler for "Tình trạng của bạn" checkboxes
-        function handleCheckboxChange(changedCheckbox) {
-            const statusOk = document.getElementById('statusOk');
-            const statusNotOk = document.getElementById('statusNotOk');
-            const notOkDescriptionInput = document.getElementById('notOkDescription');
-
-            if (changedCheckbox.id === 'statusOk' && changedCheckbox.checked) {
-                statusNotOk.checked = false;
-                notOkDescriptionInput.value = '';
-                notOkDescriptionInput.readOnly = true;
-                notOkDescriptionInput.style.backgroundColor = '#e9e9e9';
-            } else if (changedCheckbox.id === 'statusNotOk' && changedCheckbox.checked) {
-                statusOk.checked = false;
-                notOkDescriptionInput.readOnly = false;
-                notOkDescriptionInput.style.backgroundColor = '#fff';
-            } else {
-                if (!statusOk.checked && !statusNotOk.checked) {
-                    notOkDescriptionInput.value = '';
-                    notOkDescriptionInput.readOnly = true;
-                    notOkDescriptionInput.style.backgroundColor = '#e9e9e9';
-                }
+        function handleCheckboxChange(changed) {
+            const ok = document.getElementById('statusOk');
+            const notOk = document.getElementById('statusNotOk');
+            const desc = document.getElementById('notOkDescription');
+            if (changed.id === 'statusOk' && changed.checked) {
+                notOk.checked = false; desc.value = ''; desc.readOnly = true; desc.style.backgroundColor = '#e9e9e9';
+            } else if (changed.id === 'statusNotOk' && changed.checked) {
+                ok.checked = false; desc.readOnly = false; desc.style.backgroundColor = '#fff';
             }
         }
-
-        // Handler for "Thành viên gia đình" checkboxes
-        function handleFamilyCheckboxChange(changedCheckbox) {
-            const familyOk = document.getElementById('familyOk');
-            const familyNotOk = document.getElementById('familyNotOk');
-            const familyDescriptionInput = document.getElementById('familyDescription');
-
-            if (changedCheckbox.id === 'familyOk' && changedCheckbox.checked) {
-                familyNotOk.checked = false;
-                familyDescriptionInput.value = '';
-                familyDescriptionInput.readOnly = true;
-                familyDescriptionInput.style.backgroundColor = '#e9e9e9';
-            } else if (changedCheckbox.id === 'familyNotOk' && changedCheckbox.checked) {
-                familyOk.checked = false;
-                familyDescriptionInput.readOnly = false;
-                familyDescriptionInput.style.backgroundColor = '#fff';
-            } else {
-                if (!familyOk.checked && !familyNotOk.checked) {
-                    familyDescriptionInput.value = '';
-                    familyDescriptionInput.readOnly = true;
-                    familyDescriptionInput.style.backgroundColor = '#e9e9e9';
-                }
+        function handleFamilyCheckboxChange(changed) {
+            const ok = document.getElementById('familyOk');
+            const notOk = document.getElementById('familyNotOk');
+            const desc = document.getElementById('familyDescription');
+            if (changed.id === 'familyOk' && changed.checked) {
+                notOk.checked = false; desc.value = ''; desc.readOnly = true; desc.style.backgroundColor = '#e9e9e9';
+            } else if (changed.id === 'familyNotOk' && changed.checked) {
+                ok.checked = false; desc.readOnly = false; desc.style.backgroundColor = '#fff';
             }
         }
-
-        // Handler for "Thiệt hại tài sản" checkboxes
-        function handleDamageCheckboxChange(changedCheckbox) {
-            const damageNo = document.getElementById('damageNo');
-            const damageYes = document.getElementById('damageYes');
-            const damageDescriptionInput = document.getElementById('damageDescription');
-
-            if (changedCheckbox.id === 'damageNo' && changedCheckbox.checked) {
-                damageYes.checked = false;
-                damageDescriptionInput.value = '';
-                damageDescriptionInput.readOnly = true;
-                damageDescriptionInput.style.backgroundColor = '#e9e9e9';
-            } else if (changedCheckbox.id === 'damageYes' && changedCheckbox.checked) {
-                damageNo.checked = false;
-                damageDescriptionInput.readOnly = false;
-                damageDescriptionInput.style.backgroundColor = '#fff';
-            } else {
-                if (!damageNo.checked && !damageYes.checked) {
-                    damageDescriptionInput.value = '';
-                    damageDescriptionInput.readOnly = true;
-                    damageDescriptionInput.style.backgroundColor = '#e9e9e9';
-                }
+        function handleDamageCheckboxChange(changed) {
+            const no = document.getElementById('damageNo');
+            const yes = document.getElementById('damageYes');
+            const desc = document.getElementById('damageDescription');
+            if (changed.id === 'damageNo' && changed.checked) {
+                yes.checked = false; desc.value = ''; desc.readOnly = true; desc.style.backgroundColor = '#e9e9e9';
+            } else if (changed.id === 'damageYes' && changed.checked) {
+                no.checked = false; desc.readOnly = false; desc.style.backgroundColor = '#fff';
             }
+        }
+        function handleWork29CheckboxChange(changed) {
+            const yes = document.getElementById('work29Yes');
+            const no = document.getElementById('work29No');
+            if (changed.id === 'work29Yes' && changed.checked) no.checked = false;
+            if (changed.id === 'work29No' && changed.checked) yes.checked = false;
+        }
+        function handleWork30CheckboxChange(changed) {
+            const yes = document.getElementById('work30Yes');
+            const no = document.getElementById('work30No');
+            if (changed.id === 'work30Yes' && changed.checked) no.checked = false;
+            if (changed.id === 'work30No' && changed.checked) yes.checked = false;
         }
 
         async function confirmStatus() {
@@ -551,91 +455,64 @@
             const statusOk = document.getElementById('statusOk').checked;
             const statusNotOk = document.getElementById('statusNotOk').checked;
             const notOkDescription = document.getElementById('notOkDescription').value;
-
             const familyOk = document.getElementById('familyOk').checked;
             const familyNotOk = document.getElementById('familyNotOk').checked;
             const familyDescription = document.getElementById('familyDescription').value;
-
             const damageNo = document.getElementById('damageNo').checked;
             const damageYes = document.getElementById('damageYes').checked;
             const damageDescription = document.getElementById('damageDescription').value;
 
             let statusValueForForm = '';
-            let familyStatusValueForForm = '';
-            let propertyDamageValueForForm = '';
-
-            // Validate and set value for "Tình trạng của bạn"
-            if (statusOk) {
-                statusValueForForm = 'OK';
-            } else if (statusNotOk) {
-                if (notOkDescription.trim() === '') {
-                    showMessageBox('Vui lòng mô tả ngắn gọn nếu tình trạng Không OK.');
-                    return;
-                }
+            if (statusOk) statusValueForForm = 'OK';
+            else if (statusNotOk) {
+                if (!notOkDescription.trim()) { showMessageBox('Vui lòng mô tả nếu Không OK.'); return; }
                 statusValueForForm = 'Không OK - ' + notOkDescription;
-            } else {
-                showMessageBox('Vui lòng chọn tình trạng của bạn (OK hoặc Không OK).');
-                return;
-            }
+            } else { showMessageBox('Vui lòng chọn tình trạng của bạn.'); return; }
 
-            // Validate and set value for "Thành viên gia đình"
-            if (familyOk) {
-                familyStatusValueForForm = 'OK';
-            } else if (familyNotOk) {
-                if (familyDescription.trim() === '') {
-                    showMessageBox('Vui lòng mô tả ngắn gọn nếu tình trạng thành viên gia đình Không OK.');
-                    return;
-                }
+            let familyStatusValueForForm = '';
+            if (familyOk) familyStatusValueForForm = 'OK';
+            else if (familyNotOk) {
+                if (!familyDescription.trim()) { showMessageBox('Vui lòng mô tả nếu thành viên gia đình Không OK.'); return; }
                 familyStatusValueForForm = 'Không OK - ' + familyDescription;
-            } else {
-                showMessageBox('Vui lòng chọn tình trạng thành viên gia đình (OK hoặc Không OK).');
-                return;
-            }
+            } else { showMessageBox('Vui lòng chọn tình trạng gia đình.'); return; }
 
-            // Validate and set value for "Thiệt hại tài sản"
-            if (damageNo) {
-                propertyDamageValueForForm = 'Không';
-            } else if (damageYes) {
-                if (damageDescription.trim() === '') {
-                    showMessageBox('Vui lòng mô tả ngắn gọn nếu có thiệt hại tài sản.');
-                    return;
-                }
+            let propertyDamageValueForForm = '';
+            if (damageNo) propertyDamageValueForForm = 'Không';
+            else if (damageYes) {
+                if (!damageDescription.trim()) { showMessageBox('Vui lòng mô tả nếu có thiệt hại.'); return; }
                 propertyDamageValueForForm = 'Có - ' + damageDescription;
-            } else {
-                showMessageBox('Vui lòng chọn tình trạng thiệt hại tài sản (Không hoặc Có).');
-                return;
-            }
+            } else { showMessageBox('Vui lòng chọn tình trạng thiệt hại.'); return; }
+
+            let work29Value = '';
+            if (document.getElementById('work29Yes').checked) work29Value = 'Có';
+            else if (document.getElementById('work29No').checked) work29Value = 'Không';
+            else { showMessageBox('Vui lòng chọn câu trả lời cho ngày 29.9.2025.'); return; }
+
+            let work30Value = '';
+            if (document.getElementById('work30Yes').checked) work30Value = 'Có';
+            else if (document.getElementById('work30No').checked) work30Value = 'Không';
+            else { showMessageBox('Vui lòng chọn câu trả lời cho ngày 30.9.2025.'); return; }
 
             showLoading();
-
             const formData = new FormData();
             formData.append(ENTRY_EMPLOYEE_CODE, employeeCode);
             formData.append(ENTRY_STATUS, statusValueForForm);
-            formData.append(ENTRY_FAMILY_STATUS, familyStatusValueForForm); // Append family status
-            formData.append(ENTRY_PROPERTY_DAMAGE, propertyDamageValueForForm); // Append property damage
+            formData.append(ENTRY_FAMILY_STATUS, familyStatusValueForForm);
+            formData.append(ENTRY_PROPERTY_DAMAGE, propertyDamageValueForForm);
+            formData.append(ENTRY_WORK_29, work29Value);
+            formData.append(ENTRY_WORK_30, work30Value);
 
             try {
-                const response = await fetch(GOOGLE_FORM_URL, {
-                    method: 'POST',
-                    mode: 'no-cors',
-                    body: formData
-                });
-
+                await fetch(GOOGLE_FORM_URL, { method: 'POST', mode: 'no-cors', body: formData });
                 showMessageBox('Dữ liệu đã được gửi thành công!');
-
-            } catch (error) {
-                    console.error('Lỗi khi gửi dữ liệu:', error);
-                    showMessageBox('Đã xảy ra lỗi khi gửi dữ liệu. Vui lòng thử lại.');
+            } catch (e) {
+                showMessageBox('Đã xảy ra lỗi khi gửi dữ liệu.');
             } finally {
                 hideLoading();
             }
         }
 
-        // Function to reload the table data based on the currently viewed sheet
-        function reloadTable() {
-            fetchAndDisplaySheetData(currentSheetGid);
-        }
-
+        function reloadTable() { fetchAndDisplaySheetData(currentSheetGid); }
         function goBackToUpdateStatus() {
             document.getElementById('statusViewScreen').style.display = 'none';
             document.getElementById('secondScreen').style.display = 'block';
@@ -644,4 +521,3 @@
     </script>
 </body>
 </html>
-
